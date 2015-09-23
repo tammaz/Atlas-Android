@@ -26,7 +26,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AtlasAvatar extends View {
     private static final String TAG = AtlasAvatar.class.getSimpleName();
 
-    private final static CircleTransform TRANSFORM = new CircleTransform();
+    private final static CircleTransform SINGLE_TRANSFORM = new CircleTransform(TAG + ".single");
+    private final static CircleTransform MULTI_TRANSFORM = new CircleTransform(TAG + ".multi");
 
     private static final Paint PAINT_TRANSPARENT = new Paint();
     private static final Paint PAINT_BITMAP = new Paint();
@@ -152,7 +153,7 @@ public class AtlasAvatar extends View {
         int size = (int) (mInnerRadius * 2f);
         for (ImageTarget imageTarget : toLoad) {
             picasso.load(imageTarget.getUrl()).centerCrop().resize(size, size)
-                    .transform(TRANSFORM).into(imageTarget);
+                    .transform(isMultiCluster() ? MULTI_TRANSFORM : SINGLE_TRANSFORM).into(imageTarget);
         }
 
         // Redraw
@@ -160,6 +161,10 @@ public class AtlasAvatar extends View {
         return this;
     }
 
+    private boolean isMultiCluster() {
+        return mInitials != null && mInitials.size() > 1;
+    }
+    
     private boolean setSize() {
         int avatarCount = mInitials.size();
         if (avatarCount == 0) return false;

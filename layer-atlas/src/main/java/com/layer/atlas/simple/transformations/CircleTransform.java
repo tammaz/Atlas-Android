@@ -11,6 +11,12 @@ import android.graphics.Rect;
 import com.squareup.picasso.Transformation;
 
 public class CircleTransform implements Transformation {
+    private final String mKey;
+
+    public CircleTransform(String key) {
+        mKey = key;
+    }
+
     @Override
     public Bitmap transform(Bitmap source) {
         int srcWidth = source.getWidth();
@@ -35,6 +41,6 @@ public class CircleTransform implements Transformation {
 
     @Override
     public String key() {
-        return CircleTransform.class.getSimpleName();
+        return CircleTransform.class.getSimpleName() + "." + mKey;
     }
 }
