@@ -285,12 +285,12 @@ public class MessengerParticipantProvider implements ParticipantProvider {
         public String getName() {
             return name;
         }
-        
+
         @Override
-        public Drawable getAvatarDrawable() {
+        public String getAvatarUrl() {
             return null;
         }
-        
+
         public String toString() {
             StringBuilder builder = new StringBuilder();
             builder.append("Contact [userId: ").append(userId).append(", name: ").append(name).append("]");

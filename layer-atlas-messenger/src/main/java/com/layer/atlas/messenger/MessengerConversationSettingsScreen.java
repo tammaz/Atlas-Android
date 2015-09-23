@@ -149,7 +149,7 @@ public class MessengerConversationSettingsScreen extends Activity {
             Bitmap avatarBmp = Bitmap.createBitmap(maskSingleBmp.getWidth(), maskSingleBmp.getHeight(), Config.ARGB_8888);
             Canvas avatarCanvas = new Canvas(avatarBmp);
             avatarCanvas.drawColor(avatarBackgroundColor);
-            Drawable avatarDrawable = participant.getAvatarDrawable();
+            Drawable avatarDrawable = null;//participant.getAvatarDrawable();
             if (avatarDrawable != null) {
                 avatarDrawable.setBounds(0, 0, avatarBmp.getWidth(), avatarBmp.getHeight());
                 avatarDrawable.draw(avatarCanvas);
