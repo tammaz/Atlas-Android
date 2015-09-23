@@ -239,6 +239,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
                 viewHolder.mCell.setAlpha(1.0f);
             }
         } else {
+            message.markAsRead();
             // Sender name, only for first message in cluster
             if (!oneOnOne && (cluster.mClusterWithPrevious == null || cluster.mClusterWithPrevious == ClusterType.NEW_SENDER)) {
                 Actor sender = message.getSender();
