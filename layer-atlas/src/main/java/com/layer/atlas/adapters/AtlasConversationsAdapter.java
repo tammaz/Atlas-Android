@@ -21,6 +21,7 @@ import com.layer.sdk.query.SortDescriptor;
 
 import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
@@ -38,21 +39,19 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     private final DateFormat mTimeFormat;
 
     public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider) {
-        mLayerClient = client;
-        mParticipantProvider = participantProvider;
+        this(context, client, participantProvider, null);
+    }
+
+    public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Collection<String> updateAttributes) {
         Query<Conversation> query = Query.builder(Conversation.class)
                 .sortDescriptor(new SortDescriptor(Conversation.Property.LAST_MESSAGE_SENT_AT, SortDescriptor.Order.DESCENDING))
                 .build();
-
-        // Only redraw updated items when the updated attribute is in the following list:
-        List<String> updateAttributes = Arrays.asList("lastMessage", "participants", "totalUnreadMessageCount");
         mQueryController = client.newRecyclerViewController(query, updateAttributes, this);
-
+        mLayerClient = client;
+        mParticipantProvider = participantProvider;
         mInflater = LayoutInflater.from(context);
         mDateFormat = android.text.format.DateFormat.getDateFormat(context);
         mTimeFormat = android.text.format.DateFormat.getTimeFormat(context);
-        setHasStableIds(false);
-
         mViewHolderClickListener = new ViewHolder.OnClickListener() {
             @Override
             public void onClick(ViewHolder viewHolder) {
@@ -66,6 +65,7 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
                 return mConversationClickListener.onConversationLongClick(AtlasConversationsAdapter.this, viewHolder.getConversation());
             }
         };
+        setHasStableIds(false);
     }
 
     /**

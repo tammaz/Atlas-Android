@@ -80,17 +80,14 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     // Read and delivery receipts
     private Map<Message.RecipientStatus, Message> mReceiptMap = new HashMap<Message.RecipientStatus, Message>();
 
-
     public AtlasMessagesAdapter(Context context, LayerClient client, ParticipantProvider participantProvider) {
+        mQueryController = client.newRecyclerViewController(null, null, this);
         mLayerClient = client;
         mParticipantProvider = participantProvider;
-        mQueryController = client.newRecyclerViewController(null, null, this);
         mLayoutInflater = LayoutInflater.from(context);
         mUiThreadHandler = new Handler(Looper.getMainLooper());
         mDateFormat = android.text.format.DateFormat.getDateFormat(context);
         mTimeFormat = android.text.format.DateFormat.getTimeFormat(context);
-        setHasStableIds(false);
-
         mCellHolderClickListener = new AtlasCellFactory.CellHolder.OnClickListener() {
             @Override
             public void onClick(AtlasCellFactory.CellHolder cellHolder) {
@@ -104,6 +101,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
                 return mMessageClickListener.onMessageLongClick(AtlasMessagesAdapter.this, cellHolder.getMessage());
             }
         };
+        setHasStableIds(false);
     }
 
 
