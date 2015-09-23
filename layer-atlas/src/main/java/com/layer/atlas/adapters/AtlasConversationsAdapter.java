@@ -20,7 +20,9 @@ import com.layer.sdk.query.RecyclerViewController;
 import com.layer.sdk.query.SortDescriptor;
 
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConversationsAdapter.ViewHolder> implements RecyclerViewController.Callback {
     protected final LayerClient mLayerClient;
@@ -41,7 +43,11 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
         Query<Conversation> query = Query.builder(Conversation.class)
                 .sortDescriptor(new SortDescriptor(Conversation.Property.LAST_MESSAGE_SENT_AT, SortDescriptor.Order.DESCENDING))
                 .build();
-        mQueryController = client.newRecyclerViewController(query, null, this);
+
+        // Only redraw updated items when the updated attribute is in the following list:
+        List<String> updateAttributes = Arrays.asList("lastMessage", "participants", "totalUnreadMessageCount");
+        mQueryController = client.newRecyclerViewController(query, updateAttributes, this);
+
         mInflater = LayoutInflater.from(context);
         mDateFormat = android.text.format.DateFormat.getDateFormat(context);
         mTimeFormat = android.text.format.DateFormat.getTimeFormat(context);
@@ -138,7 +144,7 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
         HashSet<String> participantIds = new HashSet<String>(conversation.getParticipants());
         participantIds.remove(userId);
         viewHolder.mAvatarCluster.setParticipants(participantIds);
-        
+
         viewHolder.mTitleView.setText(Utils.getTitle(conversation, mParticipantProvider, userId));
 
         if (lastMessage == null) {
