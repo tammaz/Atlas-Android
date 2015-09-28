@@ -70,7 +70,7 @@ public class AtlasConversationsList extends RecyclerView {
     protected void onVisibilityChanged(View changedView, int visibility) {
         super.onVisibilityChanged(changedView, visibility);
         if (visibility != View.VISIBLE) return;
-        mAdapter.refresh();
+        if (mAdapter != null) mAdapter.refresh();
     }
 
     /**
