@@ -42,7 +42,7 @@ public interface AtlasCellFactory<T extends AtlasCellFactory.CellHolder> {
      * @param isMe       `true` if this Message was sent by the authenticated user, or `false`.
      * @param position   Position of this Message within its AtlasMessagesAdapter items.
      */
-    void bindCellHolder(T cellHolder, Message message, boolean isMe, int position);
+    void bindCellHolder(T cellHolder, Message message, boolean isMe, int position, int maxWidth);
 
     /**
      * CellHolders maintain a reference to their Message, and allow the capture of user interactions

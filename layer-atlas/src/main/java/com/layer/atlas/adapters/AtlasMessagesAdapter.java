@@ -5,9 +5,11 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v7.widget.RecyclerView;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
 
@@ -61,7 +63,8 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     protected final LayoutInflater mLayoutInflater;
     protected final Handler mUiThreadHandler;
     protected OnMessageAppendListener mAppendListener;
-
+    protected final DisplayMetrics mDisplayMetrics;
+    
     protected OnMessageClickListener mMessageClickListener;
     protected AtlasCellFactory.CellHolder.OnClickListener mCellHolderClickListener;
 
@@ -101,6 +104,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
                 return mMessageClickListener.onMessageLongClick(AtlasMessagesAdapter.this, cellHolder.getMessage());
             }
         };
+        mDisplayMetrics = context.getResources().getDisplayMetrics();
         setHasStableIds(false);
     }
 
@@ -271,7 +275,12 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
         // CellHolder
         AtlasCellFactory.CellHolder cellHolder = viewHolder.mCellHolder;
         cellHolder.setMessage(message);
-        cellType.mCellFactory.bindCellHolder(cellHolder, message, cellType.mMe, position);
+
+        // TODO: maxWidth assumes the AtlasMessagesList takes up the entire screen width.  Change that.
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewHolder.mCell.getLayoutParams();
+        int maxWidth = mDisplayMetrics.widthPixels - viewHolder.mRoot.getPaddingLeft() - viewHolder.mRoot.getPaddingRight() - params.leftMargin - params.rightMargin;
+
+        cellType.mCellFactory.bindCellHolder(cellHolder, message, cellType.mMe, position, maxWidth);
     }
 
     @Override
@@ -478,6 +487,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
         public final static int RESOURCE_ID_THEM = R.layout.atlas_message_item_them;
 
         // View cache
+        protected View mRoot;
         protected TextView mUserName;
         protected View mTimeGroup;
         protected TextView mTimeGroupDay;
@@ -492,6 +502,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
         public ViewHolder(View itemView, ParticipantProvider participantProvider) {
             super(itemView);
+            mRoot = itemView.findViewById(R.id.atlas_message_item_root);
             mUserName = (TextView) itemView.findViewById(R.id.atlas_message_item_sender_name);
             mTimeGroup = itemView.findViewById(R.id.atlas_message_item_time_group);
             mTimeGroupDay = (TextView) itemView.findViewById(R.id.atlas_message_item_time_group_day);

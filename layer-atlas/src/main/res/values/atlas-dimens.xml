@@ -26,6 +26,7 @@
     <!-- Message "bubbles" -->
     <dimen name="atlas_message_item_cell_min_width">30dp</dimen>
     <dimen name="atlas_message_item_cell_min_height">30dp</dimen>
+    <dimen name="atlas_message_item_cell_margin_far">16dp</dimen>
     <dimen name="atlas_message_item_cell_radius">15dp</dimen>
     <dimen name="atlas_message_item_cell_padding_top">4dp</dimen>
     <dimen name="atlas_message_item_cell_padding_bottom">6dp</dimen>

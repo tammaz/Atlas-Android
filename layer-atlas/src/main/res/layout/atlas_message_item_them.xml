@@ -15,7 +15,7 @@
 -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-
+    android:id="@+id/atlas_message_item_root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -87,6 +87,7 @@
             android:id="@+id/atlas_message_item_cell"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/atlas_message_item_cell_margin_far"
             android:minHeight="@dimen/atlas_message_item_cell_min_height"
             android:minWidth="@dimen/atlas_message_item_cell_min_width"/>
 

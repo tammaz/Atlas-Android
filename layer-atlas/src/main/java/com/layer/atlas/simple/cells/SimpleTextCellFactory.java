@@ -31,7 +31,7 @@ public class SimpleTextCellFactory implements AtlasCellFactory<SimpleTextCellFac
     }
 
     @Override
-    public void bindCellHolder(TextCellHolder cellHolder, Message message, boolean isMe, int position) {
+    public void bindCellHolder(TextCellHolder cellHolder, Message message, boolean isMe, int position, int maxWidth) {
         String text = new String(message.getMessageParts().get(0).getData());
         cellHolder.mTextView.setText(text);
     }
