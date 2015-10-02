@@ -64,7 +64,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     protected final Handler mUiThreadHandler;
     protected OnMessageAppendListener mAppendListener;
     protected final DisplayMetrics mDisplayMetrics;
-    
+
     protected OnMessageClickListener mMessageClickListener;
     protected AtlasCellFactory.CellHolder.OnClickListener mCellHolderClickListener;
 
@@ -279,6 +279,11 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
         // TODO: maxWidth assumes the AtlasMessagesList takes up the entire screen width.  Change that.
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewHolder.mCell.getLayoutParams();
         int maxWidth = mDisplayMetrics.widthPixels - viewHolder.mRoot.getPaddingLeft() - viewHolder.mRoot.getPaddingRight() - params.leftMargin - params.rightMargin;
+        if (!oneOnOne && !cellType.mMe) {
+            // Subtract off avatar width if needed
+            ViewGroup.MarginLayoutParams avatarParams = (ViewGroup.MarginLayoutParams) viewHolder.mAvatar.getLayoutParams();
+            maxWidth -= avatarParams.width + avatarParams.rightMargin + avatarParams.leftMargin;
+        }
 
         cellType.mCellFactory.bindCellHolder(cellHolder, message, cellType.mMe, position, maxWidth);
     }

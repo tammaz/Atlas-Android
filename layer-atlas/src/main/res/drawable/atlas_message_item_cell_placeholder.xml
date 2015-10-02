@@ -16,5 +16,7 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
        android:shape="rectangle">
     <corners android:radius="@dimen/atlas_message_item_cell_radius"/>
-    <solid android:color="@color/atlas_background_gray"/>
+    <stroke
+        android:width="2dp"
+        android:color="@color/atlas_background_gray"/>
 </shape>
