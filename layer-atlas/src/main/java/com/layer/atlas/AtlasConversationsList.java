@@ -26,6 +26,7 @@ import android.view.View;
 
 import com.layer.atlas.adapters.AtlasConversationsAdapter;
 import com.layer.sdk.LayerClient;
+import com.squareup.picasso.Picasso;
 
 public class AtlasConversationsList extends RecyclerView {
     private static final String TAG = AtlasConversationsList.class.getSimpleName();
@@ -47,12 +48,12 @@ public class AtlasConversationsList extends RecyclerView {
         mStyle = new Style(context, null, 0);
     }
 
-    public AtlasConversationsList init(LayerClient layerClient, ParticipantProvider participantProvider) {
+    public AtlasConversationsList init(LayerClient layerClient, ParticipantProvider participantProvider, Picasso picasso) {
         LinearLayoutManager manager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         manager.setStackFromEnd(false);
         setLayoutManager(manager);
 
-        mAdapter = new AtlasConversationsAdapter(getContext(), layerClient, participantProvider);
+        mAdapter = new AtlasConversationsAdapter(getContext(), layerClient, participantProvider, picasso);
         super.setAdapter(mAdapter);
 
         return this;

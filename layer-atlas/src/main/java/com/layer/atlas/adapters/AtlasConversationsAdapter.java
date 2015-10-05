@@ -18,16 +18,16 @@ import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.RecyclerViewController;
 import com.layer.sdk.query.SortDescriptor;
+import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 
 public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConversationsAdapter.ViewHolder> implements RecyclerViewController.Callback {
     protected final LayerClient mLayerClient;
     protected final ParticipantProvider mParticipantProvider;
+    protected final Picasso mPicasso;
     private final RecyclerViewController<Conversation> mQueryController;
     private final LayoutInflater mInflater;
     private long mInitialHistory = 0;
@@ -38,17 +38,18 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     private final DateFormat mDateFormat;
     private final DateFormat mTimeFormat;
 
-    public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider) {
-        this(context, client, participantProvider, null);
+    public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Picasso picasso) {
+        this(context, client, participantProvider, picasso, null);
     }
 
-    public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Collection<String> updateAttributes) {
+    public AtlasConversationsAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Picasso picasso, Collection<String> updateAttributes) {
         Query<Conversation> query = Query.builder(Conversation.class)
                 .sortDescriptor(new SortDescriptor(Conversation.Property.LAST_MESSAGE_SENT_AT, SortDescriptor.Order.DESCENDING))
                 .build();
         mQueryController = client.newRecyclerViewController(query, updateAttributes, this);
         mLayerClient = client;
         mParticipantProvider = participantProvider;
+        mPicasso = picasso;
         mInflater = LayoutInflater.from(context);
         mDateFormat = android.text.format.DateFormat.getDateFormat(context);
         mTimeFormat = android.text.format.DateFormat.getTimeFormat(context);
@@ -129,7 +130,7 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         ViewHolder viewHolder = new ViewHolder(mInflater.inflate(ViewHolder.RESOURCE_ID, parent, false));
         viewHolder.setClickListener(mViewHolderClickListener);
-        viewHolder.mAvatarCluster.init(mParticipantProvider);
+        viewHolder.mAvatarCluster.init(mParticipantProvider, mPicasso);
         return viewHolder;
     }
 

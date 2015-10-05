@@ -22,8 +22,10 @@ import com.layer.atlas.old.Utils;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.messaging.Actor;
 import com.layer.sdk.messaging.Message;
+import com.layer.sdk.query.ListViewController;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.RecyclerViewController;
+import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -59,6 +61,7 @@ import java.util.Set;
 public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdapter.ViewHolder> implements RecyclerViewController.Callback {
     protected final LayerClient mLayerClient;
     protected final ParticipantProvider mParticipantProvider;
+    protected final Picasso mPicasso;
     private final RecyclerViewController<Message> mQueryController;
     protected final LayoutInflater mLayoutInflater;
     protected final Handler mUiThreadHandler;
@@ -83,10 +86,19 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     // Read and delivery receipts
     private Map<Message.RecipientStatus, Message> mReceiptMap = new HashMap<Message.RecipientStatus, Message>();
 
-    public AtlasMessagesAdapter(Context context, LayerClient client, ParticipantProvider participantProvider) {
+    public AtlasMessagesAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Picasso picasso) {
         mQueryController = client.newRecyclerViewController(null, null, this);
+        mQueryController.setPreProcessCallback(new ListViewController.PreProcessCallback<Message>() {
+            @Override
+            public void onCache(ListViewController listViewController, Message message) {
+                for (AtlasCellFactory factory : mCellFactories) {
+                    if (factory.isBindable(message)) factory.onCache(message);
+                }
+            }
+        });
         mLayerClient = client;
         mParticipantProvider = participantProvider;
+        mPicasso = picasso;
         mLayoutInflater = LayoutInflater.from(context);
         mUiThreadHandler = new Handler(Looper.getMainLooper());
         mDateFormat = android.text.format.DateFormat.getDateFormat(context);
@@ -183,7 +195,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         CellType cellType = mCellTypesByViewType.get(viewType);
         int rootResId = cellType.mMe ? ViewHolder.RESOURCE_ID_ME : ViewHolder.RESOURCE_ID_THEM;
-        ViewHolder rootViewHolder = new ViewHolder(mLayoutInflater.inflate(rootResId, parent, false), mParticipantProvider);
+        ViewHolder rootViewHolder = new ViewHolder(mLayoutInflater.inflate(rootResId, parent, false), mParticipantProvider, mPicasso);
         AtlasCellFactory.CellHolder cellHolder = cellType.mCellFactory.createCellHolder(rootViewHolder.mCell, cellType.mMe, mLayoutInflater);
         cellHolder.setClickableView(rootViewHolder.itemView);
         cellHolder.setClickListener(mCellHolderClickListener);
@@ -505,7 +517,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
         // Cell
         protected AtlasCellFactory.CellHolder mCellHolder;
 
-        public ViewHolder(View itemView, ParticipantProvider participantProvider) {
+        public ViewHolder(View itemView, ParticipantProvider participantProvider, Picasso picasso) {
             super(itemView);
             mRoot = itemView.findViewById(R.id.atlas_message_item_root);
             mUserName = (TextView) itemView.findViewById(R.id.atlas_message_item_sender_name);
@@ -517,7 +529,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
             mReceipt = (TextView) itemView.findViewById(R.id.atlas_message_item_receipt);
 
             mAvatar = ((AtlasAvatar) itemView.findViewById(R.id.atlas_message_item_avatar));
-            if (mAvatar != null) mAvatar.init(participantProvider);
+            if (mAvatar != null) mAvatar.init(participantProvider, picasso);
         }
     }
 

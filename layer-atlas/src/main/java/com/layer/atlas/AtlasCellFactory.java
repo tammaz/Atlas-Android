@@ -44,6 +44,8 @@ public interface AtlasCellFactory<T extends AtlasCellFactory.CellHolder> {
      */
     void bindCellHolder(T cellHolder, Message message, boolean isMe, int position, int maxWidth);
 
+    void onCache(Message message);
+    
     /**
      * CellHolders maintain a reference to their Message, and allow the capture of user interactions
      * with their messages (e.g. clicks).  CellHolders can be extended to act as View caches, where

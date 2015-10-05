@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AtlasAvatar extends View {
-    private static final String TAG = AtlasAvatar.class.getSimpleName();
+    public static final String TAG = AtlasAvatar.class.getSimpleName();
 
     private final static CircleTransform SINGLE_TRANSFORM = new CircleTransform(TAG + ".single");
     private final static CircleTransform MULTI_TRANSFORM = new CircleTransform(TAG + ".multi");
@@ -62,6 +62,7 @@ public class AtlasAvatar extends View {
     }
 
     private ParticipantProvider mParticipantProvider;
+    private Picasso mPicasso;
 
     // Initials and Picasso image targets by user ID
     private final Object mLock = new Object();
@@ -94,8 +95,9 @@ public class AtlasAvatar extends View {
         super(context, attrs, defStyleAttr);
     }
 
-    public AtlasAvatar init(ParticipantProvider participantProvider) {
+    public AtlasAvatar init(ParticipantProvider participantProvider, Picasso picasso) {
         mParticipantProvider = participantProvider;
+        mPicasso = picasso;
         return this;
     }
 
@@ -110,7 +112,6 @@ public class AtlasAvatar extends View {
     public AtlasAvatar setParticipants(Set<String> participantIds) {
         synchronized (mLock) {
             Diff diff = diff(mInitials.keySet(), participantIds);
-            Picasso picasso = Picasso.with(getContext());
             List<ImageTarget> toLoad = new ArrayList<ImageTarget>(participantIds.size());
 
             List<ImageTarget> recycleableTargets = new ArrayList<ImageTarget>();
@@ -118,7 +119,7 @@ public class AtlasAvatar extends View {
                 mInitials.remove(removed);
                 ImageTarget target = mImageTargets.remove(removed);
                 if (target != null) {
-                    picasso.cancelRequest(target);
+                    mPicasso.cancelRequest(target);
                     recycleableTargets.add(target);
                 }
             }
@@ -145,11 +146,11 @@ public class AtlasAvatar extends View {
                 Participant participant = mParticipantProvider.getParticipant(existing);
                 if (participant == null) continue;
                 ImageTarget existingTarget = mImageTargets.get(existing);
-                picasso.cancelRequest(existingTarget);
+                mPicasso.cancelRequest(existingTarget);
                 toLoad.add(existingTarget);
             }
             for (ImageTarget target : mPendingLoads) {
-                picasso.cancelRequest(target);
+                mPicasso.cancelRequest(target);
             }
             mPendingLoads.clear();
             mPendingLoads.addAll(toLoad);
@@ -191,11 +192,13 @@ public class AtlasAvatar extends View {
 
             synchronized (mPendingLoads) {
                 if (!mPendingLoads.isEmpty()) {
-                    Picasso picasso = Picasso.with(getContext());
                     int size = Math.round(mInnerRadius * 2f);
                     for (ImageTarget imageTarget : mPendingLoads) {
-                        picasso.load(imageTarget.getUrl()).centerCrop().resize(size, size)
-                                .transform((avatarCount > 1) ? MULTI_TRANSFORM : SINGLE_TRANSFORM).into(imageTarget);
+                        mPicasso.load(imageTarget.getUrl())
+                                .tag(AtlasAvatar.TAG).noPlaceholder().noFade()
+                                .centerCrop().resize(size, size)
+                                .transform((avatarCount > 1) ? MULTI_TRANSFORM : SINGLE_TRANSFORM)
+                                .into(imageTarget);
                     }
                     mPendingLoads.clear();
                 }

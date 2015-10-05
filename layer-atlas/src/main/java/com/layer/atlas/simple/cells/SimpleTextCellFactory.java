@@ -1,6 +1,7 @@
 package com.layer.atlas.simple.cells;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +11,12 @@ import com.layer.atlas.AtlasCellFactory;
 import com.layer.atlas.R;
 import com.layer.sdk.messaging.Message;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class SimpleTextCellFactory implements AtlasCellFactory<SimpleTextCellFactory.TextCellHolder> {
+    private Map<Uri, String> mContentCache = new ConcurrentHashMap<Uri, String>();
+
     @Override
     public boolean isBindable(Message message) {
         return message.getMessageParts().get(0).getMimeType().startsWith("text/");
@@ -21,8 +27,6 @@ public class SimpleTextCellFactory implements AtlasCellFactory<SimpleTextCellFac
         Context context = cellView.getContext();
 
         View v = layoutInflater.inflate(R.layout.simple_cell_text, cellView, true);
-        //int padding = dpPixels(context, 8f);
-        //v.setPadding(padding, padding, padding, padding);
         v.setBackgroundResource(isMe ? R.drawable.atlas_message_item_cell_me : R.drawable.atlas_message_item_cell_them);
 
         TextView t = (TextView) v.findViewById(R.id.cell_text);
@@ -32,12 +36,14 @@ public class SimpleTextCellFactory implements AtlasCellFactory<SimpleTextCellFac
 
     @Override
     public void bindCellHolder(TextCellHolder cellHolder, Message message, boolean isMe, int position, int maxWidth) {
-        String text = new String(message.getMessageParts().get(0).getData());
-        cellHolder.mTextView.setText(text);
+        onCache(message);
+        cellHolder.mTextView.setText(mContentCache.get(message.getId()));
     }
 
-    private static int dpPixels(Context context, float dps) {
-        return (int) (dps * context.getResources().getDisplayMetrics().density + 0.5f);
+    @Override
+    public void onCache(Message message) {
+        if (mContentCache.containsKey(message.getId())) return;
+        mContentCache.put(message.getId(), new String(message.getMessageParts().get(0).getData()));
     }
 
     static class TextCellHolder extends AtlasCellFactory.CellHolder {

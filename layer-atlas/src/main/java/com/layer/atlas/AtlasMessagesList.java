@@ -30,6 +30,7 @@ import com.layer.sdk.messaging.Message;
 import com.layer.sdk.query.Predicate;
 import com.layer.sdk.query.Query;
 import com.layer.sdk.query.SortDescriptor;
+import com.squareup.picasso.Picasso;
 
 public class AtlasMessagesList extends RecyclerView {
     private static final String TAG = AtlasMessagesList.class.getSimpleName();
@@ -67,13 +68,13 @@ public class AtlasMessagesList extends RecyclerView {
         super(context);
     }
 
-    public AtlasMessagesList init(LayerClient layerClient, ParticipantProvider participantProvider) {
+    public AtlasMessagesList init(LayerClient layerClient, ParticipantProvider participantProvider, Picasso picasso) {
         mLayoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         mLayoutManager.setStackFromEnd(true);
         setLayoutManager(mLayoutManager);
 
         // Create an adapter that auto-scrolls if we're already at the bottom
-        mAdapter = new AtlasMessagesAdapter(getContext(), layerClient, participantProvider)
+        mAdapter = new AtlasMessagesAdapter(getContext(), layerClient, participantProvider, picasso)
                 .setOnMessageAppendListener(new AtlasMessagesAdapter.OnMessageAppendListener() {
                     @Override
                     public void onMessageAppend(AtlasMessagesAdapter adapter, Message message) {
