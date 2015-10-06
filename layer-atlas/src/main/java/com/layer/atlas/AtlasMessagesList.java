@@ -149,6 +149,15 @@ public class AtlasMessagesList extends RecyclerView {
         return mLayoutManager.findLastVisibleItemPosition();
     }
 
+    public AtlasMessagesList setFooterView(View footerView) {
+        mAdapter.setFooterView(footerView);
+        return this;
+    }
+
+    public View getFooterView() {
+        return mAdapter.getFooterView();
+    }
+
     public void parseStyle(Context context, AttributeSet attrs, int defStyle) {
         TypedArray ta = context.getTheme().obtainStyledAttributes(attrs, R.styleable.AtlasMessagesList, R.attr.AtlasMessageList, defStyle);
         mMyTextColor = ta.getColor(R.styleable.AtlasMessagesList_myTextColor, context.getResources().getColor(R.color.atlas_text_black));

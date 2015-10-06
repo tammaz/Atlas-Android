@@ -27,10 +27,11 @@
     <color name="atlas_text_white">#FFFFFFFF</color>
 
     <color name="atlas_background_white">#FFFFFFFF</color>
-    <color name="atlas_background_blue">#21AAE1</color>
-    <color name="atlas_background_blue_bright">#2196F3</color>
-    <color name="atlas_background_blue_dark">#198BB8</color>
-    <color name="atlas_background_gray">#EBEBEB</color>
+    <color name="atlas_background_black">#FF000000</color>
+    <color name="atlas_background_blue">#FF21AAE1</color>
+    <color name="atlas_background_blue_bright">#FF2196F3</color>
+    <color name="atlas_background_blue_dark">#FF198BB8</color>
+    <color name="atlas_background_gray">#FFEBEBEB</color>
     <color name="atlas_background_transparent">#00FFFFFF</color>
 
     <color name="atlas_qr_mask">#80000000</color>

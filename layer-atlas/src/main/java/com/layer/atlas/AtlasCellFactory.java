@@ -39,13 +39,12 @@ public interface AtlasCellFactory<T extends AtlasCellFactory.CellHolder> {
      *
      * @param cellHolder CellHolder to bind with Message data.
      * @param message    Message to bind to the CellHolder.
-     * @param isMe       `true` if this Message was sent by the authenticated user, or `false`.
-     * @param position   Position of this Message within its AtlasMessagesAdapter items.
+     * @param specs      Information about the CellHolder.
      */
-    void bindCellHolder(T cellHolder, Message message, boolean isMe, int position, int maxWidth);
+    void bindCellHolder(T cellHolder, Message message, CellHolderSpecs specs);
 
     void onCache(Message message);
-    
+
     /**
      * CellHolders maintain a reference to their Message, and allow the capture of user interactions
      * with their messages (e.g. clicks).  CellHolders can be extended to act as View caches, where
@@ -93,5 +92,19 @@ public interface AtlasCellFactory<T extends AtlasCellFactory.CellHolder> {
 
             boolean onLongClick(CellHolder cellHolder);
         }
+    }
+
+    /**
+     * CellHolderSpecs contains CellHolder specifications for use during binding.
+     */
+    class CellHolderSpecs {
+        // True if the CellHolder is for my message, or false if for a remote user.
+        public boolean isMe;
+
+        // Position of the CellHolder in the AtlasMessagesList.
+        public int position;
+
+        // Maximum width allowed for the CellHolder, useful when resizing images.
+        public int maxWidth;
     }
 }

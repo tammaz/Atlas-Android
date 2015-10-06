@@ -16,11 +16,16 @@
 package com.layer.atlas.old;
 
 import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.layer.atlas.Participant;
@@ -42,18 +47,16 @@ import java.util.Set;
  * needed.  AtlasTypingIndicator can provide a default UI updater if desired.
  */
 public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndicatorListener.Weak {
+    private static final String TAG = AtlasTypingIndicator.class.getSimpleName();
 
     private LayerClient mLayerClient;
     private volatile Conversation mConversation;
     private final Set<String> mTypists = new HashSet<String>();
-    private TextView mTextView;
-    private volatile Listener mListener;
+    private volatile ActivityListener mActivityListener;
+    private volatile TypingIndicatorFactory mTypingIndicatorFactory;
+    private volatile boolean mShowing = false;
 
-    // styles
-    private int mTextColor;
-    private Typeface mTextTypeface;
-    private int mTextStyle;
-    private float mTextSize;
+    private volatile boolean mActive = false;
 
     public AtlasTypingIndicator(Context context) {
         super(context);
@@ -65,7 +68,6 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
 
     public AtlasTypingIndicator(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        parseStyle(context, attrs, defStyle);
     }
 
     /**
@@ -74,12 +76,10 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
      * @return This AtlasTypingIndicator for chaining.
      */
     public AtlasTypingIndicator init(LayerClient layerClient) {
-        if (layerClient == null) throw new IllegalArgumentException("LayerClient cannot be null");
-        if (mTextView != null) throw new IllegalStateException("AtlasTypingIndicator is already initialized!");
+        if (layerClient == null) {
+            throw new IllegalArgumentException("LayerClient cannot be null");
+        }
         mLayerClient = layerClient;
-        mTextView = new TextView(getContext());
-        addView(mTextView);
-        applyStyle();
         mLayerClient.registerTypingIndicator(this);
         return this;
     }
@@ -95,26 +95,16 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
         return this;
     }
 
-    public AtlasTypingIndicator setListener(Listener listener) {
-        if (listener == null) throw new IllegalArgumentException("Callback cannot be null");
-        mListener = listener;
+    public AtlasTypingIndicator setTypingIndicatorFactory(TypingIndicatorFactory typingIndicatorFactory) {
+        mTypingIndicatorFactory = typingIndicatorFactory;
+        removeAllViews();
+        if (typingIndicatorFactory != null) addView(typingIndicatorFactory.onCreateView(getContext()));
         return this;
     }
 
-    private void parseStyle(Context context, AttributeSet attrs, int defStyle) {
-        TypedArray ta = context.getTheme().obtainStyledAttributes(attrs, R.styleable.AtlasTypingIndicator, R.attr.AtlasTypingIndicator, defStyle);
-        Resources r = context.getResources();
-        mTextColor = ta.getColor(R.styleable.AtlasTypingIndicator_indicatorTextColor, r.getColor(R.color.atlas_text_black));
-        mTextStyle = ta.getInt(R.styleable.AtlasTypingIndicator_indicatorTextStyle, Typeface.NORMAL);
-        mTextTypeface = Typeface.create(ta.getString(R.styleable.AtlasTypingIndicator_indicatorTextTypeface), mTextStyle);
-        mTextSize = ta.getDimension(R.styleable.AtlasTypingIndicator_indicatorTextSize, r.getDimension(R.dimen.atlas_text_size_general));
-        ta.recycle();
-    }
-
-    private void applyStyle() {
-        mTextView.setTextColor(mTextColor);
-        mTextView.setTypeface(mTextTypeface);
-        //mTextView.setTextSize(mTextSize);
+    public AtlasTypingIndicator setActivityListener(ActivityListener activityListener) {
+        mActivityListener = activityListener;
+        return this;
     }
 
     /**
@@ -131,34 +121,50 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
     }
 
     /**
-     * Calls Callback.onTypingUpdate() with the current list of typists.
+     * Calls Callback.onBindView() with the current list of typists.
      *
      * @return This AtlasTypingIndicator for chaining.
      */
     private AtlasTypingIndicator refresh() {
         synchronized (mTypists) {
-            if (mListener != null) mListener.onTypingUpdate(this, mTypists);
+            if (mTypingIndicatorFactory != null) mTypingIndicatorFactory.onBindView(this, mTypists);
         }
         return this;
     }
 
-    /**
-     * Sets the text content of this AtlasTypingIndicator.
-     *
-     * @param text Text content
-     */
-    public void setText(CharSequence text) {
-        mTextView.setText(text);
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        refresh();
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
     }
 
     @Override
     public void onTypingIndicator(LayerClient layerClient, Conversation conversation, String userId, TypingIndicator typingIndicator) {
+        Log.v(TAG, "onTypingIndicator: " + typingIndicator);
         if (mConversation != conversation) return;
-        if (typingIndicator == TypingIndicator.FINISHED) {
-            mTypists.remove(userId);
-        } else {
-            mTypists.add(userId);
+        boolean empty;
+        synchronized (mTypists) {
+            if (typingIndicator == TypingIndicator.FINISHED) {
+                mTypists.remove(userId);
+            } else {
+                mTypists.add(userId);
+            }
+            empty = mTypists.isEmpty();
         }
+
+        if (empty && mActive) {
+            mActive = false;
+            if (mActivityListener != null) mActivityListener.onInactive(this);
+        } else if (!empty && !mActive) {
+            mActive = true;
+            if (mActivityListener != null) mActivityListener.onActive(this);
+        }
+
         refresh();
     }
 
@@ -166,40 +172,52 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
      * AtlasTypingIndicator.Callback allows an external class to set indicator text, visibility,
      * etc. based on the current typists.
      */
-    public interface Listener {
+    public interface TypingIndicatorFactory {
+        View onCreateView(Context context);
+
         /**
          * Notifies the callback to typist updates.
          *
          * @param indicator     The AtlasTypingIndicator notifying
          * @param typingUserIds The set of currently-active typist user IDs
          */
-        void onTypingUpdate(AtlasTypingIndicator indicator, Set<String> typingUserIds);
+        void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds);
+    }
+
+    public interface ActivityListener {
+        void onActive(AtlasTypingIndicator typingIndicator);
+
+        void onInactive(AtlasTypingIndicator typingIndicator);
     }
 
     /**
      * Default Callback handler implementation.
      */
-    public static class DefaultListener implements Listener {
+    public static class DefaultTypingIndicatorFactory implements TypingIndicatorFactory {
+        private TextView mTextView;
         private final ParticipantProvider mParticipantProvider;
 
-        public DefaultListener(ParticipantProvider participantProvider) {
-            if (participantProvider == null) throw new IllegalArgumentException("ParticipantProvider cannot be null");
+        public DefaultTypingIndicatorFactory(Context context, ParticipantProvider participantProvider) {
+            if (participantProvider == null)
+                throw new IllegalArgumentException("ParticipantProvider cannot be null");
             mParticipantProvider = participantProvider;
+            mTextView = new TextView(context);
         }
 
         @Override
-        public void onTypingUpdate(AtlasTypingIndicator indicator, Set<String> typingUserIds) {
+        public View onCreateView(Context context) {
+            return mTextView;
+        }
+
+        @Override
+        public void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds) {
             List<Participant> typists = new ArrayList<Participant>(typingUserIds.size());
             for (String userId : typingUserIds) {
                 Participant participant = mParticipantProvider.getParticipant(userId);
                 if (participant != null) typists.add(participant);
             }
 
-            if (typists.isEmpty()) {
-                indicator.setText(null);
-                indicator.setVisibility(GONE);
-                return;
-            }
+            if (typists.isEmpty()) return;
 
             String[] strings = indicator.getResources().getStringArray(R.array.atlas_typing_indicator);
             String string = strings[Math.min(strings.length - 1, typingUserIds.size())];
@@ -208,8 +226,126 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
             for (Participant typist : typists) {
                 names[i++] = typist.getName();
             }
-            indicator.setText(String.format(string, names));
-            indicator.setVisibility(VISIBLE);
+            mTextView.setText(String.format(string, names));
+        }
+    }
+
+    public static class SimpleBubbleTypingIndicatorFactory implements TypingIndicatorFactory {
+        private static final int DOT_SIZE = 8;
+        private static final int DOT_SPACE = 4;
+        private static final int DOT_RES_ID = R.drawable.atlas_shape_circle_black;
+        private static final float DOT_ON_ALPHA = 0.31f;
+        private static final long ANIMATION_DURATION = 500;
+        private static final long ANIMATION_OFFSET = ANIMATION_DURATION / 3;
+
+        private View sDot1;
+        private View sDot2;
+        private View sDot3;
+
+        @Override
+        public View onCreateView(Context context) {
+            LinearLayout l = new LinearLayout(context);
+            float minHeight = context.getResources().getDimension(R.dimen.atlas_message_item_cell_min_height);
+            l.setMinimumHeight(Math.round(minHeight));
+            l.setGravity(Gravity.CENTER);
+            l.setOrientation(LinearLayout.HORIZONTAL);
+            l.setLayoutParams(new AtlasTypingIndicator.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            l.setBackgroundDrawable(context.getResources().getDrawable(R.drawable.atlas_message_item_cell_them));
+
+            ImageView v;
+            LinearLayout.LayoutParams p;
+
+            v = new ImageView(context);
+            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
+            p.setMargins(0, 0, DOT_SPACE, 0);
+            v.setLayoutParams(p);
+            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
+            sDot1 = v;
+
+            v = new ImageView(context);
+            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
+            p.setMargins(0, 0, DOT_SPACE, 0);
+            v.setLayoutParams(p);
+            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
+            sDot2 = v;
+
+            v = new ImageView(context);
+            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
+            v.setLayoutParams(p);
+            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
+            sDot3 = v;
+
+            l.addView(sDot1);
+            l.addView(sDot2);
+            l.addView(sDot3);
+
+            return l;
+        }
+
+        @Override
+        public void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds) {
+            sDot1.setAlpha(DOT_ON_ALPHA);
+            sDot2.setAlpha(DOT_ON_ALPHA);
+            sDot3.setAlpha(DOT_ON_ALPHA);
+            startAnimation(sDot1, 0);
+            startAnimation(sDot2, ANIMATION_OFFSET);
+            startAnimation(sDot3, ANIMATION_OFFSET + ANIMATION_OFFSET);
+        }
+
+//        @Override
+//        public void onHide() {
+//            sDot1.clearAnimation();
+//            sDot2.clearAnimation();
+//            sDot3.clearAnimation();
+//            sDot1.setAlpha(0.0f);
+//            sDot2.setAlpha(0.0f);
+//            sDot3.setAlpha(0.0f);
+//        }
+
+        private void startAnimation(final View v, long offset) {
+            final AlphaAnimation a1 = new AlphaAnimation(1.0f, 0.0f);
+            a1.setDuration(ANIMATION_DURATION);
+            a1.setStartOffset(offset);
+
+            final AlphaAnimation a2 = new AlphaAnimation(0.0f, 1.0f);
+            a2.setDuration(ANIMATION_DURATION);
+            a2.setStartOffset(0);
+
+            a1.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    a2.setStartOffset(0);
+                    a2.reset();
+                    v.startAnimation(a2);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+
+            a2.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    a1.setStartOffset(0);
+                    a1.reset();
+                    v.startAnimation(a1);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+
+            v.startAnimation(a1);
         }
     }
 

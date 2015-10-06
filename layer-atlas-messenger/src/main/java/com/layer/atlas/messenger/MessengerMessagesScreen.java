@@ -226,7 +226,7 @@ public class MessengerMessagesScreen extends Activity {
         typingIndicator = (AtlasTypingIndicator)findViewById(R.id.atlas_screen_messages_typing_indicator);
         typingIndicator.init(app.getLayerClient())
                 .setConversation(conv)
-                .setListener(new AtlasTypingIndicator.DefaultListener(app.getParticipantProvider()));
+                .setTypingIndicatorFactory(new AtlasTypingIndicator.DefaultTypingIndicatorFactory(this, app.getParticipantProvider()));
         
         // location manager for inserting locations:
         this.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);

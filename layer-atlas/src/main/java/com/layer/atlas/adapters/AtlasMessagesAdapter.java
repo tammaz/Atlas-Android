@@ -59,6 +59,8 @@ import java.util.Set;
  * @see AtlasCellFactory
  */
 public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdapter.ViewHolder> implements RecyclerViewController.Callback {
+    private final static int VIEW_TYPE_FOOTER = 0;
+
     protected final LayerClient mLayerClient;
     protected final ParticipantProvider mParticipantProvider;
     protected final Picasso mPicasso;
@@ -72,7 +74,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     protected AtlasCellFactory.CellHolder.OnClickListener mCellHolderClickListener;
 
     // Cells
-    protected int mViewTypeCount = 0;
+    protected int mViewTypeCount = VIEW_TYPE_FOOTER;
     protected final Set<AtlasCellFactory> mCellFactories = new LinkedHashSet<AtlasCellFactory>();
     protected final Map<Integer, CellType> mCellTypesByViewType = new HashMap<Integer, CellType>();
     protected final Map<AtlasCellFactory, Integer> mMyViewTypesByCell = new HashMap<AtlasCellFactory, Integer>();
@@ -85,6 +87,9 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     // Read and delivery receipts
     private Map<Message.RecipientStatus, Message> mReceiptMap = new HashMap<Message.RecipientStatus, Message>();
+
+    private View mFooterView;
+    private int mFooterPosition = 0;
 
     public AtlasMessagesAdapter(Context context, LayerClient client, ParticipantProvider participantProvider, Picasso picasso) {
         mQueryController = client.newRecyclerViewController(null, null, this);
@@ -120,7 +125,6 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
         setHasStableIds(false);
     }
 
-
     /**
      * Sets this AtlasMessagesAdapter's Message Query.
      *
@@ -137,6 +141,27 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
      */
     public void refresh() {
         mQueryController.execute();
+    }
+
+    public void setFooterView(View footerView) {
+        boolean isNull = footerView == null;
+        boolean wasNull = mFooterView == null;
+        mFooterView = footerView;
+
+        if (wasNull && !isNull) {
+            // Insert
+            notifyItemInserted(mFooterPosition);
+        } else if (!wasNull && isNull) {
+            // Delete
+            notifyItemRemoved(mFooterPosition);
+        } else if (!wasNull && !isNull) {
+            // Change
+            notifyItemChanged(mFooterPosition);
+        }
+    }
+
+    public View getFooterView() {
+        return mFooterView;
     }
 
 
@@ -192,19 +217,54 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     }
 
     @Override
+    public int getItemViewType(int position) {
+        if (mFooterView != null && position == mFooterPosition) return VIEW_TYPE_FOOTER;
+        Message message = getItem(position);
+        boolean isMe = mLayerClient.getAuthenticatedUserId().equals(message.getSender().getUserId());
+        for (AtlasCellFactory factory : mCellFactories) {
+            if (!factory.isBindable(message)) continue;
+            return isMe ? mMyViewTypesByCell.get(factory) : mTheirViewTypesByCell.get(factory);
+        }
+        return -1;
+    }
+
+    @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if (viewType == VIEW_TYPE_FOOTER) {
+            return new ViewHolder(mLayoutInflater.inflate(ViewHolder.RESOURCE_ID_FOOTER, parent, false));
+        }
+
         CellType cellType = mCellTypesByViewType.get(viewType);
-        int rootResId = cellType.mMe ? ViewHolder.RESOURCE_ID_ME : ViewHolder.RESOURCE_ID_THEM;
-        ViewHolder rootViewHolder = new ViewHolder(mLayoutInflater.inflate(rootResId, parent, false), mParticipantProvider, mPicasso);
+        int rootResId = cellType.mMe ? CellViewHolder.RESOURCE_ID_ME : CellViewHolder.RESOURCE_ID_THEM;
+        CellViewHolder rootViewHolder = new CellViewHolder(mLayoutInflater.inflate(rootResId, parent, false), mParticipantProvider, mPicasso);
         AtlasCellFactory.CellHolder cellHolder = cellType.mCellFactory.createCellHolder(rootViewHolder.mCell, cellType.mMe, mLayoutInflater);
         cellHolder.setClickableView(rootViewHolder.itemView);
         cellHolder.setClickListener(mCellHolderClickListener);
         rootViewHolder.mCellHolder = cellHolder;
+        rootViewHolder.mCellHolderSpecs = new AtlasCellFactory.CellHolderSpecs();
         return rootViewHolder;
     }
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
+        if (mFooterView != null && position == mFooterPosition) {
+            // Footer
+            bindFooter(viewHolder);
+        } else {
+            // Cell
+            bindCellViewHolder((CellViewHolder) viewHolder, position);
+        }
+    }
+
+    public void bindFooter(ViewHolder viewHolder) {
+        viewHolder.mRoot.removeAllViews();
+        if (mFooterView.getParent() != null) {
+            ((ViewGroup) mFooterView.getParent()).removeView(mFooterView);
+        }
+        viewHolder.mRoot.addView(mFooterView);
+    }
+
+    public void bindCellViewHolder(CellViewHolder viewHolder, int position) {
         Message message = getItem(position);
         CellType cellType = mCellTypesByViewType.get(viewHolder.getItemViewType());
         boolean oneOnOne = message.getConversation().getParticipants().size() == 2;
@@ -297,23 +357,16 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
             maxWidth -= avatarParams.width + avatarParams.rightMargin + avatarParams.leftMargin;
         }
 
-        cellType.mCellFactory.bindCellHolder(cellHolder, message, cellType.mMe, position, maxWidth);
-    }
+        viewHolder.mCellHolderSpecs.isMe = cellType.mMe;
+        viewHolder.mCellHolderSpecs.position = position;
+        viewHolder.mCellHolderSpecs.maxWidth = maxWidth;
 
-    @Override
-    public int getItemViewType(int position) {
-        Message message = getItem(position);
-        boolean isMe = mLayerClient.getAuthenticatedUserId().equals(message.getSender().getUserId());
-        for (AtlasCellFactory factory : mCellFactories) {
-            if (!factory.isBindable(message)) continue;
-            return isMe ? mMyViewTypesByCell.get(factory) : mTheirViewTypesByCell.get(factory);
-        }
-        return -1;
+        cellType.mCellFactory.bindCellHolder(cellHolder, message, viewHolder.mCellHolderSpecs);
     }
 
     @Override
     public int getItemCount() {
-        return mQueryController.getItemCount();
+        return mQueryController.getItemCount() + ((mFooterView == null) ? 0 : 1);
     }
 
     public Integer getPosition(Message message) {
@@ -325,6 +378,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     }
 
     public Message getItem(int position) {
+        if (mFooterView != null && position == mFooterPosition) return null;
         return mQueryController.getItem(position);
     }
 
@@ -440,6 +494,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     @Override
     public void onQueryDataSetChanged(RecyclerViewController controller) {
+        mFooterPosition = mQueryController.getItemCount();
         updateReceipts();
         notifyDataSetChanged();
     }
@@ -458,6 +513,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     @Override
     public void onQueryItemInserted(RecyclerViewController controller, int position) {
+        mFooterPosition++;
         updateReceipts();
         notifyItemInserted(position);
         if (mAppendListener != null && (position + 1) == getItemCount()) {
@@ -467,6 +523,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     @Override
     public void onQueryItemRangeInserted(RecyclerViewController controller, int positionStart, int itemCount) {
+        mFooterPosition += itemCount;
         updateReceipts();
         notifyItemRangeInserted(positionStart, itemCount);
         int positionEnd = positionStart + itemCount;
@@ -477,12 +534,14 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     @Override
     public void onQueryItemRemoved(RecyclerViewController controller, int position) {
+        mFooterPosition--;
         updateReceipts();
         notifyItemRemoved(position);
     }
 
     @Override
     public void onQueryItemRangeRemoved(RecyclerViewController controller, int positionStart, int itemCount) {
+        mFooterPosition -= itemCount;
         updateReceipts();
         notifyItemRangeRemoved(positionStart, itemCount);
     }
@@ -499,12 +558,22 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     //==============================================================================================
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        // Layouts to inflate
+        public final static int RESOURCE_ID_FOOTER = R.layout.atlas_message_item_footer;
+
+        // View cache
+        protected ViewGroup mRoot;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            mRoot = (ViewGroup) itemView.findViewById(R.id.atlas_message_item_root);
+        }
+    }
+
+    static class CellViewHolder extends ViewHolder {
         public final static int RESOURCE_ID_ME = R.layout.atlas_message_item_me;
         public final static int RESOURCE_ID_THEM = R.layout.atlas_message_item_them;
 
         // View cache
-        protected View mRoot;
         protected TextView mUserName;
         protected View mTimeGroup;
         protected TextView mTimeGroupDay;
@@ -516,10 +585,10 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
         // Cell
         protected AtlasCellFactory.CellHolder mCellHolder;
+        protected AtlasCellFactory.CellHolderSpecs mCellHolderSpecs;
 
-        public ViewHolder(View itemView, ParticipantProvider participantProvider, Picasso picasso) {
+        public CellViewHolder(View itemView, ParticipantProvider participantProvider, Picasso picasso) {
             super(itemView);
-            mRoot = itemView.findViewById(R.id.atlas_message_item_root);
             mUserName = (TextView) itemView.findViewById(R.id.atlas_message_item_sender_name);
             mTimeGroup = itemView.findViewById(R.id.atlas_message_item_time_group);
             mTimeGroupDay = (TextView) itemView.findViewById(R.id.atlas_message_item_time_group_day);

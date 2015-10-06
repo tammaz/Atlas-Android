@@ -1,7 +1,6 @@
 package com.layer.atlas.simple.cells;
 
 import android.content.Context;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +25,7 @@ public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleT
 
     private final Picasso mPicasso;
     private final Transformation mTransform;
-    private final Map<Uri, ThreePartImageUtils.ThreePartImageInfo> mInfoCache = new ConcurrentHashMap<Uri, ThreePartImageUtils.ThreePartImageInfo>();
+    private final Map<String, ThreePartImageUtils.ThreePartImageInfo> mInfoCache = new ConcurrentHashMap<String, ThreePartImageUtils.ThreePartImageInfo>();
 
     public SimpleThreePartImageCellFactory(Context context, Picasso picasso) {
         mPicasso = picasso;
@@ -41,8 +40,9 @@ public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleT
 
     @Override
     public void onCache(Message message) {
-        if (mInfoCache.containsKey(message.getId())) return;
-        mInfoCache.put(message.getId(), ThreePartImageUtils.getInfo(message));
+        String id = message.getId().toString();
+        if (mInfoCache.containsKey(id)) return;
+        mInfoCache.put(id, ThreePartImageUtils.getInfo(message));
     }
 
     @Override
@@ -51,10 +51,10 @@ public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleT
     }
 
     @Override
-    public void bindCellHolder(final ImageCellHolder cellHolder, final Message message, boolean isMe, int position, int maxWidth) {
+    public void bindCellHolder(final ImageCellHolder cellHolder, final Message message, CellHolderSpecs specs) {
         // Parse into part
         onCache(message);
-        ThreePartImageUtils.ThreePartImageInfo info = mInfoCache.get(message.getId());
+        ThreePartImageUtils.ThreePartImageInfo info = mInfoCache.get(message.getId().toString());
 
         // Get rotation and scaled dimensions
         final float rotation;
@@ -88,12 +88,12 @@ public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleT
         }
         final int scaledWidth;
         final int scaledHeight;
-        if (width <= maxWidth) {
+        if (width <= specs.maxWidth) {
             scaledWidth = width;
             scaledHeight = height;
         } else {
-            scaledWidth = maxWidth;
-            scaledHeight = (int) Math.round((double) maxWidth * (double) height / (double) width);
+            scaledWidth = specs.maxWidth;
+            scaledHeight = (int) Math.round((double) specs.maxWidth * (double) height / (double) width);
         }
 
         cellHolder.mImageView.setImageBitmap(null);
