@@ -58,6 +58,7 @@ import com.layer.atlas.old.AtlasParticipantPicker;
 import com.layer.atlas.old.AtlasTypingIndicator;
 import com.layer.atlas.old.cells.ImageCell;
 import com.layer.atlas.messenger.MessengerApp.keys;
+import com.layer.atlas.simple.typingindicators.SimpleBubbleTypingIndicatorFactory;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.changes.LayerChangeEvent;
 import com.layer.sdk.listeners.LayerChangeEventListener;
@@ -226,7 +227,7 @@ public class MessengerMessagesScreen extends Activity {
         typingIndicator = (AtlasTypingIndicator)findViewById(R.id.atlas_screen_messages_typing_indicator);
         typingIndicator.init(app.getLayerClient())
                 .setConversation(conv)
-                .setTypingIndicatorFactory(new AtlasTypingIndicator.DefaultTypingIndicatorFactory(this, app.getParticipantProvider()));
+                .setTypingIndicatorFactory(new SimpleBubbleTypingIndicatorFactory());
         
         // location manager for inserting locations:
         this.locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);

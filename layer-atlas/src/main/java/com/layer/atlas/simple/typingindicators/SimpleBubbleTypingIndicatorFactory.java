@@ -2,7 +2,6 @@ package com.layer.atlas.simple.typingindicators;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +31,7 @@ public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.
     private View sDot2;
     private View sDot3;
 
-    private Set<String> mLastTypists = null;
+    private Set<String> mLastTypists = new HashSet<String>();
 
     @Override
     public View onCreateView(Context context) {
@@ -83,9 +82,8 @@ public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.
 
     @Override
     public void onBindView(AtlasTypingIndicator indicator, Map<String, LayerTypingIndicatorListener.TypingIndicator> typingUserIds) {
-        // Just pay attention to the set of active typists, not PAUSED/STARTED.
-        if (equalSets(mLastTypists, typingUserIds.keySet()) && sDot1.getAnimation() != null) return;
-        if (mLastTypists == null) mLastTypists = new HashSet<String>();
+        // If an animation is running, just pay attention to the set of active typists, not their typing state.
+        if (sDot1.getAnimation() != null && equalSets(mLastTypists, typingUserIds.keySet())) return;
         mLastTypists.clear();
         mLastTypists.addAll(typingUserIds.keySet());
 
