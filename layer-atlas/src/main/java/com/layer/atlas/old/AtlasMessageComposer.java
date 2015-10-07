@@ -62,6 +62,7 @@ public class AtlasMessageComposer extends FrameLayout {
     private float mTextSize;
     private Typeface mTypeface;
     private int mTextStyle;
+    private boolean mEnabled;
 
     public AtlasMessageComposer(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -83,7 +84,7 @@ public class AtlasMessageComposer extends FrameLayout {
         mTextStyle = ta.getInt(R.styleable.AtlasMessageComposer_composerTextStyle, Typeface.NORMAL);
         String typeFaceName = ta.getString(R.styleable.AtlasMessageComposer_composerTextTypeface);
         mTypeface = typeFaceName != null ? Typeface.create(typeFaceName, mTextStyle) : null;
-        setEnabled(ta.getBoolean(R.styleable.AtlasMessageComposer_android_enabled, true));
+        mEnabled = ta.getBoolean(R.styleable.AtlasMessageComposer_android_enabled, true);
         ta.recycle();
     }
 
@@ -92,7 +93,7 @@ public class AtlasMessageComposer extends FrameLayout {
         if (mAttachButton != null) mAttachButton.setEnabled(enabled);
         if (mMessageText != null) mMessageText.setEnabled(enabled);
         if (mSendButton != null) {
-            mSendButton.setEnabled(enabled && (mMessageText.getText().length() > 0));
+            mSendButton.setEnabled(enabled && (mMessageText != null) && (mMessageText.getText().length() > 0));
         }
         super.setEnabled(enabled);
     }
@@ -204,9 +205,6 @@ public class AtlasMessageComposer extends FrameLayout {
                 }
             }
         });
-        mAttachButton.setEnabled(isEnabled());
-        mMessageText.setEnabled(isEnabled());
-        mSendButton.setEnabled(isEnabled());
         applyStyle();
         return this;
     }
@@ -215,6 +213,7 @@ public class AtlasMessageComposer extends FrameLayout {
         //mMessageText.setTextSize(mTextSize);
         mMessageText.setTypeface(mTypeface, mTextStyle);
         mMessageText.setTextColor(mTextColor);
+        setEnabled(mEnabled);
     }
 
     public AtlasMessageComposer registerMenuItem(String title, OnClickListener clickListener) {
