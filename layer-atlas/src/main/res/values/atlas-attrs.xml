@@ -11,6 +11,82 @@
     <attr name="AtlasTypingIndicator" format="reference"/>
 
 
+    <!-- #################################### -->
+    <!-- Styleable Atlas Component Attributes -->
+    <!-- #################################### -->
+
+    <!-- TODO: use "android:" when possible  -->
+    <declare-styleable name="AtlasConversationsList">
+        <attr name="cellTitleTextColor"/>
+        <attr name="cellTitleTextTypeface"/>
+        <attr name="cellTitleTextStyle"/>
+        <attr name="cellTitleUnreadTextColor"/>
+        <attr name="cellTitleUnreadTextTypeface"/>
+        <attr name="cellTitleUnreadTextStyle"/>
+        <attr name="cellSubtitleTextColor"/>
+        <attr name="cellSubtitleTextTypeface"/>
+        <attr name="cellSubtitleTextStyle"/>
+        <attr name="cellSubtitleUnreadTextColor"/>
+        <attr name="cellSubtitleUnreadTextTypeface"/>
+        <attr name="cellSubtitleUnreadTextStyle"/>
+        <attr name="cellBackgroundColor"/>
+        <attr name="cellUnreadBackgroundColor"/>
+        <attr name="dateTextColor"/>
+        <attr name="avatarTextColor"/>
+        <attr name="avatarBackgroundColor"/>
+    </declare-styleable>
+
+    <!-- TODO: use "android:" when possible  -->
+    <declare-styleable name="AtlasMessageComposer">
+        <attr name="composerTextColor"/>
+        <attr name="composerTextSize"/>
+        <attr name="composerTextTypeface"/>
+        <attr name="composerTextStyle"/>
+        <attr name="android:enabled" />
+    </declare-styleable>
+
+    <!-- TODO: use "android:" when possible  -->
+    <declare-styleable name="AtlasMessagesList">
+        <attr name="myBubbleColor"/>
+        <attr name="myTextColor"/>
+        <attr name="myTextSize"/>
+        <attr name="myTextTypeface"/>
+        <attr name="myTextStyle"/>
+        <attr name="theirBubbleColor"/>
+        <attr name="theirTextColor"/>
+        <attr name="theirTextSize"/>
+        <attr name="theirTextTypeface"/>
+        <attr name="theirTextStyle"/>
+        <attr name="dateTextColor"/>
+        <attr name="avatarTextColor"/>
+        <attr name="avatarBackgroundColor"/>
+    </declare-styleable>
+
+    <!-- TODO: use "android:" when possible  -->
+    <declare-styleable name="AtlasParticipantPicker">
+        <attr name="inputTextColor"/>
+        <attr name="inputTextTypeface"/>
+        <attr name="inputTextStyle"/>
+        <attr name="listTextColor"/>
+        <attr name="listTextTypeface"/>
+        <attr name="listTextStyle"/>
+        <attr name="avatarBackgroundColor"/>
+        <attr name="avatarTextColor"/>
+        <attr name="chipBackgroundColor"/>
+        <attr name="chipTextColor"/>
+        <attr name="chipTextTypeface"/>
+        <attr name="chipTextStyle"/>
+    </declare-styleable>
+
+    <!-- TODO: use "android:" when possible  -->
+    <declare-styleable name="AtlasTypingIndicator">
+        <attr name="indicatorTextColor"/>
+        <attr name="indicatorTextSize"/>
+        <attr name="indicatorTextTypeface"/>
+        <attr name="indicatorTextStyle"/>
+    </declare-styleable>
+
+
     <!-- ####################### -->
     <!-- Atlas Attribute Formats -->
     <!-- ####################### -->

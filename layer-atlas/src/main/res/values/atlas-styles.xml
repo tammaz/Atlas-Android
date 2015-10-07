@@ -13,106 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.    
 -->
-<resources>
-
-    <!-- ########### -->
-    <!-- Atlas Style -->
-    <!-- ########### -->
-    <style name="Theme.Atlas.Base.Light" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="AtlasConversationList">@style/AtlasConversationList</item>
-        <item name="AtlasMessageComposer">@style/AtlasMessageComposer</item>
-        <item name="AtlasMessageList">@style/AtlasMessageList</item>
-        <item name="AtlasParticipantPicker">@style/AtlasParticipantPicker</item>
-        <item name="AtlasTypingIndicator">@style/AtlasTypingIndicator</item>
-
-        <item name="colorPrimary">@color/atlas_background_blue</item>
-        <item name="colorPrimaryDark">@color/atlas_background_blue_dark</item>
-
-        <!-- floating action button; EditText cursor -->
-        <item name="colorAccent">@color/atlas_background_blue</item>
-
-        <item name="actionBarStyle">@style/AtlasActionBar</item>
-        <item name="actionBarTabTextStyle">@style/AtlasActionBarTabText</item>
-        <item name="actionMenuTextColor">@color/atlas_text_white</item>
-        <item name="actionButtonStyle">@style/AtlasActionBarButton</item>
-        <item name="actionOverflowButtonStyle">@style/AtlasActionBarOverflowButton</item>
-
-        <item name="android:windowBackground">@color/atlas_background_white</item>
-    </style>
-
-    <style name="Theme.Atlas.Light" parent="Theme.Atlas.Base.Light">
-        <!-- v21 adds custom items -->
-    </style>
-
-
-    <!-- #################################### -->
-    <!-- Styleable Atlas Component Attributes -->
-    <!-- #################################### -->
-    <declare-styleable name="AtlasConversationsList">
-        <attr name="cellTitleTextColor"/>
-        <attr name="cellTitleTextTypeface"/>
-        <attr name="cellTitleTextStyle"/>
-        <attr name="cellTitleUnreadTextColor"/>
-        <attr name="cellTitleUnreadTextTypeface"/>
-        <attr name="cellTitleUnreadTextStyle"/>
-        <attr name="cellSubtitleTextColor"/>
-        <attr name="cellSubtitleTextTypeface"/>
-        <attr name="cellSubtitleTextStyle"/>
-        <attr name="cellSubtitleUnreadTextColor"/>
-        <attr name="cellSubtitleUnreadTextTypeface"/>
-        <attr name="cellSubtitleUnreadTextStyle"/>
-        <attr name="cellBackgroundColor"/>
-        <attr name="cellUnreadBackgroundColor"/>
-        <attr name="dateTextColor"/>
-        <attr name="avatarTextColor"/>
-        <attr name="avatarBackgroundColor"/>
-    </declare-styleable>
-
-    <declare-styleable name="AtlasMessageComposer">
-        <attr name="composerTextColor"/>
-        <attr name="composerTextSize"/>
-        <attr name="composerTextTypeface"/>
-        <attr name="composerTextStyle"/>
-    </declare-styleable>
-
-    <declare-styleable name="AtlasMessagesList">
-        <attr name="myBubbleColor"/>
-        <attr name="myTextColor"/>
-        <attr name="myTextSize"/>
-        <attr name="myTextTypeface"/>
-        <attr name="myTextStyle"/>
-        <attr name="theirBubbleColor"/>
-        <attr name="theirTextColor"/>
-        <attr name="theirTextSize"/>
-        <attr name="theirTextTypeface"/>
-        <attr name="theirTextStyle"/>
-        <attr name="dateTextColor"/>
-        <attr name="avatarTextColor"/>
-        <attr name="avatarBackgroundColor"/>
-    </declare-styleable>
-
-    <declare-styleable name="AtlasParticipantPicker">
-        <attr name="inputTextColor"/>
-        <attr name="inputTextTypeface"/>
-        <attr name="inputTextStyle"/>
-        <attr name="listTextColor"/>
-        <attr name="listTextTypeface"/>
-        <attr name="listTextStyle"/>
-        <attr name="avatarBackgroundColor"/>
-        <attr name="avatarTextColor"/>
-        <attr name="chipBackgroundColor"/>
-        <attr name="chipTextColor"/>
-        <attr name="chipTextTypeface"/>
-        <attr name="chipTextStyle"/>
-    </declare-styleable>
-
-    <declare-styleable name="AtlasTypingIndicator">
-        <attr name="indicatorTextColor"/>
-        <attr name="indicatorTextSize"/>
-        <attr name="indicatorTextTypeface"/>
-        <attr name="indicatorTextStyle"/>
-    </declare-styleable>
-
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- ############################## -->
     <!-- Default Atlas Component Styles -->
@@ -142,6 +43,7 @@
         <item name="composerTextSize">@dimen/atlas_text_size_general</item>
         <item name="composerTextTypeface">normal</item>
         <item name="composerTextStyle">normal</item>
+        <item name="android:enabled">true</item>
     </style>
 
     <style name="AtlasMessageList">

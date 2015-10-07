@@ -47,7 +47,7 @@ public class ThreePartImageCellFactory implements AtlasCellFactory<ThreePartImag
 
     @Override
     public ImageCellHolder createCellHolder(ViewGroup cellView, boolean isMe, LayoutInflater layoutInflater) {
-        return new ImageCellHolder(layoutInflater.inflate(R.layout.simple_cell_image, cellView, true));
+        return new ImageCellHolder(layoutInflater.inflate(R.layout.cell_image, cellView, true));
     }
 
     @Override

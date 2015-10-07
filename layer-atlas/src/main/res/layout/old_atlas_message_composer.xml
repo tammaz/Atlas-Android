@@ -14,47 +14,41 @@
      limitations under the License.    
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal" >
+              android:layout_width="match_parent"
+              android:layout_height="48dp"
+              android:background="@drawable/atlas_message_composer_background"
+              android:orientation="horizontal"
+              android:paddingLeft="4dp"
+              android:paddingRight="4dp"
+    >
 
-    <TextView 
+    <ImageView
         android:id="@+id/atlas_message_composer_upload"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="bottom"
-        android:gravity="center"
-        android:text="+"
-        android:visibility="gone"
+        android:layout_height="match_parent"
+        android:layout_marginRight="4dp"
+        android:src="@drawable/ic_add_white_24dp"
+        android:tint="@color/atlas_button"
         />
-    
+
     <EditText
         android:id="@+id/atlas_message_composer_text"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:maxLines="4"
-        android:textSize="@dimen/atlas_text_size_general"
-        android:background="@drawable/atlas_ctl_edit_text"
         android:hint="Message"
-        android:minHeight="48dp"
+        android:maxLines="4"
         />
-    
-    <TextView
+
+    <Button
         android:id="@+id/atlas_message_composer_send"
+        style="?android:attr/borderlessButtonStyle"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="match_parent"
         android:layout_gravity="bottom"
-        android:layout_marginRight="4dp"
-        android:gravity="left|center_vertical"
-        android:maxLines="1"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:textSize="@dimen/atlas_text_size_general" 
-        android:textColor="@color/atlas_text_gray"
+        android:layout_marginLeft="4dp"
         android:text="SEND"
         />
-            
+
 </LinearLayout>
-    
