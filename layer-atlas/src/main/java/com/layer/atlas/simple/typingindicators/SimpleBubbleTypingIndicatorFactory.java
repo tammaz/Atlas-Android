@@ -2,6 +2,7 @@ package com.layer.atlas.simple.typingindicators;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.TypingIndicatorFactory {
+    private static final String TAG = SimpleBubbleTypingIndicatorFactory.class.getSimpleName();
+
     private static final int DOT_RES_ID = R.drawable.atlas_shape_circle_black;
     private static final float DOT_ON_ALPHA = 0.31f;
     private static final long ANIMATION_PERIOD = 600;
@@ -81,7 +84,7 @@ public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.
     @Override
     public void onBindView(AtlasTypingIndicator indicator, Map<String, LayerTypingIndicatorListener.TypingIndicator> typingUserIds) {
         // Just pay attention to the set of active typists, not PAUSED/STARTED.
-        if (equalSets(mLastTypists, typingUserIds.keySet())) return;
+        if (equalSets(mLastTypists, typingUserIds.keySet()) && sDot1.getAnimation() != null) return;
         if (mLastTypists == null) mLastTypists = new HashSet<String>();
         mLastTypists.clear();
         mLastTypists.addAll(typingUserIds.keySet());
@@ -150,10 +153,13 @@ public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.
         view.startAnimation(fadeOut);
     }
 
+    /**
+     * Ease in/out
+     */
     private final Interpolator COSINE_INTERPOLATOR = new Interpolator() {
         @Override
         public float getInterpolation(float input) {
-            return (float) Math.cos(input * Math.PI / 2f);
+            return (float) (1.0 - Math.cos(input * Math.PI / 2.0));
         }
     };
 
