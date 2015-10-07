@@ -78,10 +78,7 @@ public class AtlasMessagesList extends RecyclerView {
                 .setOnMessageAppendListener(new AtlasMessagesAdapter.OnMessageAppendListener() {
                     @Override
                     public void onMessageAppend(AtlasMessagesAdapter adapter, Message message) {
-                        int end = adapter.getItemCount() - 1;
-                        if (end <= 0) return;
-                        int visible = AtlasMessagesList.this.findLastVisibleItemPosition();
-                        if (visible >= (end - 1)) AtlasMessagesList.this.scrollToPosition(end);
+                        autoScroll();
                     }
                 });
         super.setAdapter(mAdapter);
@@ -149,13 +146,34 @@ public class AtlasMessagesList extends RecyclerView {
         return mLayoutManager.findLastVisibleItemPosition();
     }
 
+    /**
+     * Convenience pass-through to this list's AtlasMessagesAdapter.
+     *
+     * @see AtlasMessagesAdapter#setFooterView(View)
+     */
     public AtlasMessagesList setFooterView(View footerView) {
         mAdapter.setFooterView(footerView);
+        autoScroll();
         return this;
     }
 
+    /**
+     * Convenience pass-through to this list's AtlasMessagesAdapter.
+     *
+     * @see AtlasMessagesAdapter#getFooterView()
+     */
     public View getFooterView() {
         return mAdapter.getFooterView();
+    }
+
+    /**
+     * Scrolls if the user is at the end
+     */
+    private void autoScroll() {
+        int end = mAdapter.getItemCount() - 1;
+        if (end <= 0) return;
+        int visible = findLastVisibleItemPosition();
+        if (visible >= (end - 1)) scrollToPosition(end);
     }
 
     public void parseStyle(Context context, AttributeSet attrs, int defStyle) {

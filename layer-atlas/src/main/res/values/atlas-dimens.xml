@@ -52,4 +52,7 @@
     <dimen name="atlas_message_item_sender_name_margin_left">36dp</dimen> <!-- change once bubbles have tails -->
     <dimen name="atlas_message_item_sender_name_margin_bottom">1dp</dimen>
 
+    <dimen name="atlas_typing_indicator_dot_size">4dp</dimen>
+    <dimen name="atlas_typing_indicator_dot_space">2dp</dimen>
+
 </resources>

@@ -17,28 +17,15 @@ package com.layer.atlas.old;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
-import com.layer.atlas.Participant;
-import com.layer.atlas.ParticipantProvider;
-import com.layer.atlas.R;
 import com.layer.sdk.LayerClient;
 import com.layer.sdk.listeners.LayerTypingIndicatorListener;
 import com.layer.sdk.messaging.Conversation;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * AtlasTypingIndicator provides feedback about typists within a Conversation.  When initialized
@@ -49,13 +36,12 @@ import java.util.Set;
 public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndicatorListener.Weak {
     private static final String TAG = AtlasTypingIndicator.class.getSimpleName();
 
+    private final ConcurrentHashMap<String, TypingIndicator> mTypists = new ConcurrentHashMap<String, TypingIndicator>();
+
     private LayerClient mLayerClient;
     private volatile Conversation mConversation;
-    private final Set<String> mTypists = new HashSet<String>();
-    private volatile ActivityListener mActivityListener;
+    private volatile TypingActivityListener mActivityListener;
     private volatile TypingIndicatorFactory mTypingIndicatorFactory;
-    private volatile boolean mShowing = false;
-
     private volatile boolean mActive = false;
 
     public AtlasTypingIndicator(Context context) {
@@ -98,11 +84,13 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
     public AtlasTypingIndicator setTypingIndicatorFactory(TypingIndicatorFactory typingIndicatorFactory) {
         mTypingIndicatorFactory = typingIndicatorFactory;
         removeAllViews();
-        if (typingIndicatorFactory != null) addView(typingIndicatorFactory.onCreateView(getContext()));
+        if (typingIndicatorFactory != null) {
+            addView(typingIndicatorFactory.onCreateView(getContext()));
+        }
         return this;
     }
 
-    public AtlasTypingIndicator setActivityListener(ActivityListener activityListener) {
+    public AtlasTypingIndicator setTypingActivityListener(TypingActivityListener activityListener) {
         mActivityListener = activityListener;
         return this;
     }
@@ -145,31 +133,30 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
 
     @Override
     public void onTypingIndicator(LayerClient layerClient, Conversation conversation, String userId, TypingIndicator typingIndicator) {
-        Log.v(TAG, "onTypingIndicator: " + typingIndicator);
         if (mConversation != conversation) return;
         boolean empty;
         synchronized (mTypists) {
             if (typingIndicator == TypingIndicator.FINISHED) {
                 mTypists.remove(userId);
             } else {
-                mTypists.add(userId);
+                mTypists.put(userId, typingIndicator);
             }
             empty = mTypists.isEmpty();
         }
 
         if (empty && mActive) {
             mActive = false;
-            if (mActivityListener != null) mActivityListener.onInactive(this);
+            if (mActivityListener != null) mActivityListener.onTypingInactive(this);
         } else if (!empty && !mActive) {
             mActive = true;
-            if (mActivityListener != null) mActivityListener.onActive(this);
+            if (mActivityListener != null) mActivityListener.onTypingActive(this);
         }
 
         refresh();
     }
 
     /**
-     * AtlasTypingIndicator.Callback allows an external class to set indicator text, visibility,
+     * TypingIndicatorFactory allows an external class to set indicator text, visibility,
      * etc. based on the current typists.
      */
     public interface TypingIndicatorFactory {
@@ -181,172 +168,26 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
          * @param indicator     The AtlasTypingIndicator notifying
          * @param typingUserIds The set of currently-active typist user IDs
          */
-        void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds);
-    }
-
-    public interface ActivityListener {
-        void onActive(AtlasTypingIndicator typingIndicator);
-
-        void onInactive(AtlasTypingIndicator typingIndicator);
+        void onBindView(AtlasTypingIndicator indicator, Map<String, TypingIndicator> typingUserIds);
     }
 
     /**
-     * Default Callback handler implementation.
+     * TypingActivityListener alerts a listener to active and inactive typing.  This is useful for
+     * adding and removing a typing indicator view from a layout, for example.
      */
-    public static class DefaultTypingIndicatorFactory implements TypingIndicatorFactory {
-        private TextView mTextView;
-        private final ParticipantProvider mParticipantProvider;
+    public interface TypingActivityListener {
+        /**
+         * Typists transitioned from inactive to active.
+         *
+         * @param typingIndicator AtlasTypingIndicator notifying this listener.
+         */
+        void onTypingActive(AtlasTypingIndicator typingIndicator);
 
-        public DefaultTypingIndicatorFactory(Context context, ParticipantProvider participantProvider) {
-            if (participantProvider == null)
-                throw new IllegalArgumentException("ParticipantProvider cannot be null");
-            mParticipantProvider = participantProvider;
-            mTextView = new TextView(context);
-        }
-
-        @Override
-        public View onCreateView(Context context) {
-            return mTextView;
-        }
-
-        @Override
-        public void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds) {
-            List<Participant> typists = new ArrayList<Participant>(typingUserIds.size());
-            for (String userId : typingUserIds) {
-                Participant participant = mParticipantProvider.getParticipant(userId);
-                if (participant != null) typists.add(participant);
-            }
-
-            if (typists.isEmpty()) return;
-
-            String[] strings = indicator.getResources().getStringArray(R.array.atlas_typing_indicator);
-            String string = strings[Math.min(strings.length - 1, typingUserIds.size())];
-            String[] names = new String[typists.size()];
-            int i = 0;
-            for (Participant typist : typists) {
-                names[i++] = typist.getName();
-            }
-            mTextView.setText(String.format(string, names));
-        }
+        /**
+         * Typists transitioned from active to inactive.
+         *
+         * @param typingIndicator AtlasTypingIndicator notifying this listener.
+         */
+        void onTypingInactive(AtlasTypingIndicator typingIndicator);
     }
-
-    public static class SimpleBubbleTypingIndicatorFactory implements TypingIndicatorFactory {
-        private static final int DOT_SIZE = 8;
-        private static final int DOT_SPACE = 4;
-        private static final int DOT_RES_ID = R.drawable.atlas_shape_circle_black;
-        private static final float DOT_ON_ALPHA = 0.31f;
-        private static final long ANIMATION_DURATION = 500;
-        private static final long ANIMATION_OFFSET = ANIMATION_DURATION / 3;
-
-        private View sDot1;
-        private View sDot2;
-        private View sDot3;
-
-        @Override
-        public View onCreateView(Context context) {
-            LinearLayout l = new LinearLayout(context);
-            float minHeight = context.getResources().getDimension(R.dimen.atlas_message_item_cell_min_height);
-            l.setMinimumHeight(Math.round(minHeight));
-            l.setGravity(Gravity.CENTER);
-            l.setOrientation(LinearLayout.HORIZONTAL);
-            l.setLayoutParams(new AtlasTypingIndicator.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            l.setBackgroundDrawable(context.getResources().getDrawable(R.drawable.atlas_message_item_cell_them));
-
-            ImageView v;
-            LinearLayout.LayoutParams p;
-
-            v = new ImageView(context);
-            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
-            p.setMargins(0, 0, DOT_SPACE, 0);
-            v.setLayoutParams(p);
-            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
-            sDot1 = v;
-
-            v = new ImageView(context);
-            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
-            p.setMargins(0, 0, DOT_SPACE, 0);
-            v.setLayoutParams(p);
-            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
-            sDot2 = v;
-
-            v = new ImageView(context);
-            p = new LinearLayout.LayoutParams(DOT_SIZE, DOT_SIZE);
-            v.setLayoutParams(p);
-            v.setBackgroundDrawable(context.getResources().getDrawable(DOT_RES_ID));
-            sDot3 = v;
-
-            l.addView(sDot1);
-            l.addView(sDot2);
-            l.addView(sDot3);
-
-            return l;
-        }
-
-        @Override
-        public void onBindView(AtlasTypingIndicator indicator, Set<String> typingUserIds) {
-            sDot1.setAlpha(DOT_ON_ALPHA);
-            sDot2.setAlpha(DOT_ON_ALPHA);
-            sDot3.setAlpha(DOT_ON_ALPHA);
-            startAnimation(sDot1, 0);
-            startAnimation(sDot2, ANIMATION_OFFSET);
-            startAnimation(sDot3, ANIMATION_OFFSET + ANIMATION_OFFSET);
-        }
-
-//        @Override
-//        public void onHide() {
-//            sDot1.clearAnimation();
-//            sDot2.clearAnimation();
-//            sDot3.clearAnimation();
-//            sDot1.setAlpha(0.0f);
-//            sDot2.setAlpha(0.0f);
-//            sDot3.setAlpha(0.0f);
-//        }
-
-        private void startAnimation(final View v, long offset) {
-            final AlphaAnimation a1 = new AlphaAnimation(1.0f, 0.0f);
-            a1.setDuration(ANIMATION_DURATION);
-            a1.setStartOffset(offset);
-
-            final AlphaAnimation a2 = new AlphaAnimation(0.0f, 1.0f);
-            a2.setDuration(ANIMATION_DURATION);
-            a2.setStartOffset(0);
-
-            a1.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    a2.setStartOffset(0);
-                    a2.reset();
-                    v.startAnimation(a2);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-                }
-            });
-
-            a2.setAnimationListener(new Animation.AnimationListener() {
-                @Override
-                public void onAnimationStart(Animation animation) {
-                }
-
-                @Override
-                public void onAnimationEnd(Animation animation) {
-                    a1.setStartOffset(0);
-                    a1.reset();
-                    v.startAnimation(a1);
-                }
-
-                @Override
-                public void onAnimationRepeat(Animation animation) {
-                }
-            });
-
-            v.startAnimation(a1);
-        }
-    }
-
 }
