@@ -40,7 +40,7 @@
                 android:layout_height="match_parent"
                 />
             
-            <com.layer.atlas.old.AtlasTypingIndicator 
+            <com.layer.atlas.AtlasTypingIndicator 
                 android:id="@+id/atlas_screen_messages_typing_indicator"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

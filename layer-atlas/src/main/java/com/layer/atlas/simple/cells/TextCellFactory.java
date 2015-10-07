@@ -13,7 +13,7 @@ import com.layer.sdk.messaging.Message;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SimpleTextCellFactory implements AtlasCellFactory<SimpleTextCellFactory.TextCellHolder> {
+public class TextCellFactory implements AtlasCellFactory<TextCellFactory.TextCellHolder> {
     private final Map<String, String> mContentCache = new ConcurrentHashMap<String, String>();
 
     @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.layer.atlas.old;
+package com.layer.atlas;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -38,7 +38,6 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
 
     private final ConcurrentHashMap<String, TypingIndicator> mTypists = new ConcurrentHashMap<String, TypingIndicator>();
 
-    private LayerClient mLayerClient;
     private volatile Conversation mConversation;
     private volatile TypingActivityListener mActivityListener;
     private volatile TypingIndicatorFactory mTypingIndicatorFactory;
@@ -65,8 +64,7 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
         if (layerClient == null) {
             throw new IllegalArgumentException("LayerClient cannot be null");
         }
-        mLayerClient = layerClient;
-        mLayerClient.registerTypingIndicator(this);
+        layerClient.registerTypingIndicator(this);
         return this;
     }
 
@@ -81,17 +79,15 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
         return this;
     }
 
-    public AtlasTypingIndicator setTypingIndicatorFactory(TypingIndicatorFactory typingIndicatorFactory) {
-        mTypingIndicatorFactory = typingIndicatorFactory;
+    public AtlasTypingIndicator setTypingIndicatorFactory(TypingIndicatorFactory factory) {
+        mTypingIndicatorFactory = factory;
         removeAllViews();
-        if (typingIndicatorFactory != null) {
-            addView(typingIndicatorFactory.onCreateView(getContext()));
-        }
+        if (factory != null) addView(factory.onCreateView(getContext()));
         return this;
     }
 
-    public AtlasTypingIndicator setTypingActivityListener(TypingActivityListener activityListener) {
-        mActivityListener = activityListener;
+    public AtlasTypingIndicator setTypingActivityListener(TypingActivityListener listener) {
+        mActivityListener = listener;
         return this;
     }
 
@@ -101,9 +97,7 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
      * @return This AtlasTypingIndicator for chaining.
      */
     public AtlasTypingIndicator clear() {
-        synchronized (mTypists) {
-            mTypists.clear();
-        }
+        mTypists.clear();
         refresh();
         return this;
     }
@@ -114,12 +108,13 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
      * @return This AtlasTypingIndicator for chaining.
      */
     private AtlasTypingIndicator refresh() {
-        synchronized (mTypists) {
-            if (mTypingIndicatorFactory != null) mTypingIndicatorFactory.onBindView(this, mTypists);
-        }
+        if (mTypingIndicatorFactory != null) mTypingIndicatorFactory.onBindView(this, mTypists);
         return this;
     }
 
+    /**
+     * Refresh when the typing indicator gets attached (e.g. scrolling into view).
+     */
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -127,23 +122,18 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
     }
 
     @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-    }
-
-    @Override
     public void onTypingIndicator(LayerClient layerClient, Conversation conversation, String userId, TypingIndicator typingIndicator) {
+        // Only monitor typing in this indicator's conversation.
         if (mConversation != conversation) return;
-        boolean empty;
-        synchronized (mTypists) {
-            if (typingIndicator == TypingIndicator.FINISHED) {
-                mTypists.remove(userId);
-            } else {
-                mTypists.put(userId, typingIndicator);
-            }
-            empty = mTypists.isEmpty();
-        }
 
+        // Notify ActivityListener to active/inactive typists.
+        boolean empty;
+        if (typingIndicator == TypingIndicator.FINISHED) {
+            mTypists.remove(userId);
+        } else {
+            mTypists.put(userId, typingIndicator);
+        }
+        empty = mTypists.isEmpty();
         if (empty && mActive) {
             mActive = false;
             if (mActivityListener != null) mActivityListener.onTypingInactive(this);
@@ -152,6 +142,7 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
             if (mActivityListener != null) mActivityListener.onTypingActive(this);
         }
 
+        // Refresh the indicator view.
         refresh();
     }
 
@@ -160,6 +151,12 @@ public class AtlasTypingIndicator extends FrameLayout implements LayerTypingIndi
      * etc. based on the current typists.
      */
     public interface TypingIndicatorFactory {
+        /**
+         * Returns the View for this typing indicator.
+         *
+         * @param context Context to create the View.
+         * @return View to display as a typing indicator.
+         */
         View onCreateView(Context context);
 
         /**

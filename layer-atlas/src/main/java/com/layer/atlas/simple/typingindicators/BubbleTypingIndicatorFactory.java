@@ -12,15 +12,15 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.layer.atlas.R;
-import com.layer.atlas.old.AtlasTypingIndicator;
+import com.layer.atlas.AtlasTypingIndicator;
 import com.layer.sdk.listeners.LayerTypingIndicatorListener;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class SimpleBubbleTypingIndicatorFactory implements AtlasTypingIndicator.TypingIndicatorFactory {
-    private static final String TAG = SimpleBubbleTypingIndicatorFactory.class.getSimpleName();
+public class BubbleTypingIndicatorFactory implements AtlasTypingIndicator.TypingIndicatorFactory {
+    private static final String TAG = BubbleTypingIndicatorFactory.class.getSimpleName();
 
     private static final int DOT_RES_ID = R.drawable.atlas_shape_circle_black;
     private static final float DOT_ON_ALPHA = 0.31f;

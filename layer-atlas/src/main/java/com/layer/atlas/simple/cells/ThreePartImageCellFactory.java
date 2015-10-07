@@ -18,8 +18,8 @@ import com.squareup.picasso.Transformation;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleThreePartImageCellFactory.ImageCellHolder> {
-    private static final String TAG = SimpleThreePartImageCellFactory.class.getSimpleName();
+public class ThreePartImageCellFactory implements AtlasCellFactory<ThreePartImageCellFactory.ImageCellHolder> {
+    private static final String TAG = ThreePartImageCellFactory.class.getSimpleName();
 
     private static final int PLACEHOLDER_RES_ID = R.drawable.atlas_message_item_cell_placeholder;
 
@@ -27,7 +27,7 @@ public class SimpleThreePartImageCellFactory implements AtlasCellFactory<SimpleT
     private final Transformation mTransform;
     private final Map<String, ThreePartImageUtils.ThreePartImageInfo> mInfoCache = new ConcurrentHashMap<String, ThreePartImageUtils.ThreePartImageInfo>();
 
-    public SimpleThreePartImageCellFactory(Context context, Picasso picasso) {
+    public ThreePartImageCellFactory(Context context, Picasso picasso) {
         mPicasso = picasso;
         float radius = context.getResources().getDimension(com.layer.atlas.R.dimen.atlas_message_item_cell_radius);
         mTransform = new RoundedTransform(radius);
