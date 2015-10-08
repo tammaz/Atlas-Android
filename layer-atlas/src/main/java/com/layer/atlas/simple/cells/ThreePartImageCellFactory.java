@@ -61,26 +61,22 @@ public class ThreePartImageCellFactory implements AtlasCellFactory<ThreePartImag
         int width;
         int height;
         switch (info.orientation) {
-            case 0:
-                // 0 degrees
+            case ThreePartImageUtils.ORIENTATION_0:
                 rotation = 0f;
                 width = info.width;
                 height = info.height;
                 break;
-            case 1:
-                // 180 degrees
-                rotation = 180f;
-                width = info.width;
-                height = info.height;
-                break;
-            case 2:
-                // 90 degrees right
+            case ThreePartImageUtils.ORIENTATION_90:
                 rotation = -90f;
                 width = info.height;
                 height = info.width;
                 break;
+            case ThreePartImageUtils.ORIENTATION_180:
+                rotation = 180f;
+                width = info.width;
+                height = info.height;
+                break;
             default:
-                // 90 degrees left
                 rotation = 90f;
                 width = info.height;
                 height = info.width;

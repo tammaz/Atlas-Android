@@ -1,9 +1,12 @@
 package com.layer.atlas.simple.cells;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.net.Uri;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import com.layer.sdk.LayerClient;
@@ -28,7 +31,12 @@ import java.util.concurrent.TimeUnit;
 
 public class ThreePartImageUtils {
     public static String TAG = ThreePartImageUtils.class.getSimpleName();
-    
+
+    public static final int ORIENTATION_0 = 0;
+    public static final int ORIENTATION_90 = 3;
+    public static final int ORIENTATION_180 = 1;
+    public static final int ORIENTATION_270 = 2;
+
     private static final int PART_INDEX_FULL = 0;
     private static final int PART_INDEX_PREVIEW = 1;
     private static final int PART_INDEX_INFO = 2;
@@ -86,15 +94,62 @@ public class ThreePartImageUtils {
         if (!imageFile.exists()) throw new IllegalArgumentException("Image file does not exist");
         if (!imageFile.canRead()) throw new IllegalArgumentException("Cannot read image file");
         if (imageFile.length() <= 0) throw new IllegalArgumentException("Image file is empty");
-        return newThreePartMessage(layerClient, conversation, BitmapFactory.decodeFile(imageFile.getAbsolutePath()));
+
+        // Try parsing Exif data.
+        int orientation = ORIENTATION_0;
+        try {
+            ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
+            int exifOrientation = exifInterface.getAttributeInt("Orientation", 1);
+            switch (exifOrientation) {
+                case 1:
+                case 2:
+                    orientation = ORIENTATION_0;
+                    break;
+                case 3:
+                case 4:
+                    orientation = ORIENTATION_180;
+                    break;
+                case 5:
+                case 6:
+                    orientation = ORIENTATION_270;
+                    break;
+                case 7:
+                case 8:
+                    orientation = ORIENTATION_90;
+                    break;
+
+            }
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+
+        return newThreePartMessage(layerClient, conversation, orientation, BitmapFactory.decodeFile(imageFile.getAbsolutePath()));
     }
 
     public static Message newThreePartMessage(LayerClient layerClient, Conversation conversation, Context context, Uri imageUri) throws IOException {
-        if (imageUri == null) throw new IllegalArgumentException("Null image file");
+        if (imageUri == null) throw new IllegalArgumentException("Null image Uri");
+
+        // Try getting the file so we can parse Exif orientiation.
+        try {
+            Cursor metaCursor = context.getContentResolver().query(imageUri, new String[]{MediaStore.MediaColumns.DATA}, null, null, null);
+            if (metaCursor != null) {
+                try {
+                    if (metaCursor.moveToFirst()) {
+                        return newThreePartMessage(layerClient, conversation, new File(metaCursor.getString(0)));
+                    }
+                } finally {
+                    metaCursor.close();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage(), e);
+        }
+
+        // Fall back to default orientation.
         InputStream inputStream = null;
         try {
             inputStream = context.getContentResolver().openInputStream(imageUri);
-            return newThreePartMessage(layerClient, conversation, BitmapFactory.decodeStream(inputStream));
+            return newThreePartMessage(layerClient, conversation, ORIENTATION_0, BitmapFactory.decodeStream(inputStream));
         } finally {
             if (inputStream != null) inputStream.close();
         }
@@ -108,7 +163,7 @@ public class ThreePartImageUtils {
      * @param fullBitmap
      * @return
      */
-    private static Message newThreePartMessage(LayerClient client, Conversation conversation, Bitmap fullBitmap) {
+    private static Message newThreePartMessage(LayerClient client, Conversation conversation, int orientation, Bitmap fullBitmap) {
         if (client == null) throw new IllegalArgumentException("Null LayerClient");
         if (conversation == null) throw new IllegalArgumentException("Null Conversation");
         if (fullBitmap == null) throw new IllegalArgumentException("Null Bitmap");
@@ -135,7 +190,7 @@ public class ThreePartImageUtils {
         }
 
         MessagePart full = client.newMessagePart("image/jpeg", fullStream.toByteArray());
-        MessagePart info = client.newMessagePart(MIME_INFO, ("{\"orientation\":0, \"width\":" + fullWidth + ", \"height\":" + fullHeight + "}").getBytes());
+        MessagePart info = client.newMessagePart(MIME_INFO, ("{\"orientation\":" + orientation + ", \"width\":" + fullWidth + ", \"height\":" + fullHeight + "}").getBytes());
         MessagePart preview;
         if (!isResize) {
             fullBitmap.recycle();

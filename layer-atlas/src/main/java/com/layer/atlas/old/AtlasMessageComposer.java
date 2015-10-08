@@ -16,10 +16,13 @@
 package com.layer.atlas.old;
 
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
@@ -28,8 +31,10 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
@@ -48,8 +53,8 @@ public class AtlasMessageComposer extends FrameLayout {
     private static final String TAG = AtlasMessageComposer.class.getSimpleName();
 
     private EditText mMessageText;
-    private View mSendButton;
-    private View mAttachButton;
+    private Button mSendButton;
+    private ImageView mAttachButton;
 
     private Listener mListener;
     private Conversation mConversation;
@@ -115,7 +120,7 @@ public class AtlasMessageComposer extends FrameLayout {
 
         LayoutInflater.from(getContext()).inflate(R.layout.old_atlas_message_composer, this);
 
-        mAttachButton = findViewById(R.id.atlas_message_composer_upload);
+        mAttachButton = (ImageView) findViewById(R.id.atlas_message_composer_upload);
         mAttachButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 final PopupWindow popupWindow = new PopupWindow(v.getContext());
@@ -178,7 +183,7 @@ public class AtlasMessageComposer extends FrameLayout {
             }
         });
 
-        mSendButton = findViewById(R.id.atlas_message_composer_send);
+        mSendButton = (Button) findViewById(R.id.atlas_message_composer_send);
         mSendButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
                 String text = mMessageText.getText().toString();
@@ -214,6 +219,11 @@ public class AtlasMessageComposer extends FrameLayout {
         mMessageText.setTypeface(mTypeface, mTextStyle);
         mMessageText.setTextColor(mTextColor);
         setEnabled(mEnabled);
+
+        ColorStateList list = getResources().getColorStateList(R.color.atlas_message_composer_attach_button);
+        Drawable d = DrawableCompat.wrap(mAttachButton.getDrawable());
+        DrawableCompat.setTintList(d, list);
+        mAttachButton.setImageDrawable(d);
     }
 
     public AtlasMessageComposer registerMenuItem(String title, OnClickListener clickListener) {
