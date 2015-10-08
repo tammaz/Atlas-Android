@@ -266,6 +266,7 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
 
     public void bindCellViewHolder(CellViewHolder viewHolder, int position) {
         Message message = getItem(position);
+        viewHolder.mMessage = message;
         CellType cellType = mCellTypesByViewType.get(viewHolder.getItemViewType());
         boolean oneOnOne = message.getConversation().getParticipants().size() == 2;
 
@@ -380,6 +381,11 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     public Message getItem(int position) {
         if (mFooterView != null && position == mFooterPosition) return null;
         return mQueryController.getItem(position);
+    }
+
+    public Message getItem(RecyclerView.ViewHolder viewHolder) {
+        if (!(viewHolder instanceof CellViewHolder)) return null;
+        return ((CellViewHolder) viewHolder).mMessage;
     }
 
 
@@ -572,6 +578,8 @@ public class AtlasMessagesAdapter extends RecyclerView.Adapter<AtlasMessagesAdap
     static class CellViewHolder extends ViewHolder {
         public final static int RESOURCE_ID_ME = R.layout.atlas_message_item_me;
         public final static int RESOURCE_ID_THEM = R.layout.atlas_message_item_them;
+
+        protected Message mMessage;
 
         // View cache
         protected TextView mUserName;

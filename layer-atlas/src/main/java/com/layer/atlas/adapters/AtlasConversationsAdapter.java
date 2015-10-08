@@ -178,6 +178,10 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
         return mQueryController.getItem(position);
     }
 
+    public Conversation getItem(RecyclerView.ViewHolder viewHolder) {
+        return ((ViewHolder) viewHolder).getConversation();
+    }
+
 
     //==============================================================================================
     // UI update callbacks
@@ -286,7 +290,6 @@ public class AtlasConversationsAdapter extends RecyclerView.Adapter<AtlasConvers
             boolean onLongClick(ViewHolder viewHolder);
         }
     }
-
 
     /**
      * Listens for item clicks on an IntegrationConversationsAdapter.

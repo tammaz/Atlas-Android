@@ -20,6 +20,7 @@ import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -35,8 +36,9 @@ import com.squareup.picasso.Picasso;
 public class AtlasMessagesList extends RecyclerView {
     private static final String TAG = AtlasMessagesList.class.getSimpleName();
 
-    AtlasMessagesAdapter mAdapter;
-    LinearLayoutManager mLayoutManager;
+    private AtlasMessagesAdapter mAdapter;
+    private LinearLayoutManager mLayoutManager;
+    private ItemTouchHelper mSwipeItemTouchHelper;
 
     //styles
     public int mMyBubbleColor;
@@ -127,6 +129,20 @@ public class AtlasMessagesList extends RecyclerView {
         return this;
     }
 
+    public AtlasMessagesList setOnMessageSwipeListener(AtlasMessagesList.OnMessageSwipeListener listener) {
+        if (mSwipeItemTouchHelper != null) {
+            mSwipeItemTouchHelper.attachToRecyclerView(null);
+        }
+        if (listener == null) {
+            mSwipeItemTouchHelper = null;
+        } else {
+            listener.setMessagesList(this);
+            mSwipeItemTouchHelper = new ItemTouchHelper(listener);
+            mSwipeItemTouchHelper.attachToRecyclerView(this);
+        }
+        return this;
+    }
+
     /**
      * Convenience pass-through to this list's AtlasMessagesAdapter.
      *
@@ -197,5 +213,47 @@ public class AtlasMessagesList extends RecyclerView {
         mAvatarTextColor = ta.getColor(R.styleable.AtlasMessagesList_avatarTextColor, context.getResources().getColor(R.color.atlas_text_black));
         mAvatarBackgroundColor = ta.getColor(R.styleable.AtlasMessagesList_avatarBackgroundColor, context.getResources().getColor(R.color.atlas_background_gray));
         ta.recycle();
+    }
+
+    /**
+     * Listens for item swipes on an AtlasConversationsList.
+     */
+    public static abstract class OnMessageSwipeListener extends ItemTouchHelper.SimpleCallback {
+        private AtlasMessagesList mMessagesList;
+
+        /**
+         * @param directions Directions to allow swiping in.
+         * @see ItemTouchHelper#LEFT
+         * @see ItemTouchHelper#RIGHT
+         * @see ItemTouchHelper#UP
+         * @see ItemTouchHelper#DOWN
+         */
+        public OnMessageSwipeListener(int directions) {
+            super(0, directions);
+        }
+
+        /**
+         * Alerts the listener to item swipes.
+         *
+         * @param messagesList The AtlasMessagesList which had an item swiped.
+         * @param message      The item swiped.
+         * @param direction    The direction swiped.
+         */
+        public abstract void onMessageSwipe(AtlasMessagesList messagesList, Message message, int direction);
+
+        @Override
+        public void onSwiped(ViewHolder viewHolder, int direction) {
+            if (mMessagesList == null) return;
+            onMessageSwipe(mMessagesList, ((AtlasMessagesAdapter) mMessagesList.getAdapter()).getItem(viewHolder), direction);
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, ViewHolder viewHolder, ViewHolder target) {
+            return false;
+        }
+
+        protected void setMessagesList(AtlasMessagesList messagesList) {
+            mMessagesList = messagesList;
+        }
     }
 }

@@ -21,11 +21,13 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.layer.atlas.adapters.AtlasConversationsAdapter;
 import com.layer.sdk.LayerClient;
+import com.layer.sdk.messaging.Conversation;
 import com.squareup.picasso.Picasso;
 
 public class AtlasConversationsList extends RecyclerView {
@@ -33,6 +35,7 @@ public class AtlasConversationsList extends RecyclerView {
 
     AtlasConversationsAdapter mAdapter;
     private final Style mStyle;
+    private ItemTouchHelper mSwipeItemTouchHelper;
 
     public AtlasConversationsList(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -81,6 +84,20 @@ public class AtlasConversationsList extends RecyclerView {
      */
     public AtlasConversationsList setOnConversationClickListener(AtlasConversationsAdapter.OnConversationClickListener listener) {
         mAdapter.setOnConversationClickListener(listener);
+        return this;
+    }
+
+    public AtlasConversationsList setOnConversationSwipeListener(AtlasConversationsList.OnConversationSwipeListener listener) {
+        if (mSwipeItemTouchHelper != null) {
+            mSwipeItemTouchHelper.attachToRecyclerView(null);
+        }
+        if (listener == null) {
+            mSwipeItemTouchHelper = null;
+        } else {
+            listener.setConversationsList(this);
+            mSwipeItemTouchHelper = new ItemTouchHelper(listener);
+            mSwipeItemTouchHelper.attachToRecyclerView(this);
+        }
         return this;
     }
 
@@ -214,6 +231,48 @@ public class AtlasConversationsList extends RecyclerView {
 
         public int getAvatarBackgroundColor() {
             return mAvatarBackgroundColor;
+        }
+    }
+
+    /**
+     * Listens for item swipes on an AtlasConversationsList.
+     */
+    public static abstract class OnConversationSwipeListener extends ItemTouchHelper.SimpleCallback {
+        private AtlasConversationsList mConversationsList;
+
+        /**
+         * @param directions Directions to allow swiping in.
+         * @see ItemTouchHelper#LEFT
+         * @see ItemTouchHelper#RIGHT
+         * @see ItemTouchHelper#UP
+         * @see ItemTouchHelper#DOWN
+         */
+        public OnConversationSwipeListener(int directions) {
+            super(0, directions);
+        }
+
+        /**
+         * Alerts the listener to item swipes.
+         *
+         * @param conversationsList The AtlasConversationsList which had an item swiped.
+         * @param conversation      The item swiped.
+         * @param direction         The direction swiped.
+         */
+        public abstract void onConversationSwipe(AtlasConversationsList conversationsList, Conversation conversation, int direction);
+
+        @Override
+        public void onSwiped(ViewHolder viewHolder, int direction) {
+            if (mConversationsList == null) return;
+            onConversationSwipe(mConversationsList, ((AtlasConversationsAdapter) mConversationsList.getAdapter()).getItem(viewHolder), direction);
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, ViewHolder viewHolder, ViewHolder target) {
+            return false;
+        }
+
+        protected void setConversationsList(AtlasConversationsList conversationsList) {
+            mConversationsList = conversationsList;
         }
     }
 }
