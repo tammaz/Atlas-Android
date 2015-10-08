@@ -221,7 +221,7 @@ public class AtlasMessageComposer extends FrameLayout {
         setEnabled(mEnabled);
 
         ColorStateList list = getResources().getColorStateList(R.color.atlas_message_composer_attach_button);
-        Drawable d = DrawableCompat.wrap(mAttachButton.getDrawable());
+        Drawable d = DrawableCompat.wrap(mAttachButton.getDrawable().mutate());
         DrawableCompat.setTintList(d, list);
         mAttachButton.setImageDrawable(d);
     }
